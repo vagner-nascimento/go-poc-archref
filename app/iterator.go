@@ -1,6 +1,6 @@
 package app
 
 // CreateCustomer creates a customer
-func CreateCustomer(customer []byte) {
+func CreateCustomer(customer Customer) {
 	addCustomer(customer)
 }

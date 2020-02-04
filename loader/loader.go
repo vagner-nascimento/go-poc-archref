@@ -6,7 +6,7 @@ import (
 )
 
 func LoadSubscribers() {
-	err := dataamqp.SubscribeCustomer()
+	err := dataamqp.SubscribeConsumers()
 	if err != nil {
 		infra.LogError("Error on load Customer subscriber", err)
 	} else {

@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
+	infra.LogInfo("Application running")
+	infra.LogInfo("Loading subscribers...")
 	loader.LoadSubscribers()
-	infra.LogInfo("Subscribers loaded")
-	infra.LogInfo("Application loaded")
 }

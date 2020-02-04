@@ -9,14 +9,14 @@ type person struct {
 	Name string `name: "name"`
 }
 
-type customer struct {
+type Customer struct {
 	person
 	Alias          string `alias: "alias"`
 	CreditCardHash string
 }
 
-func makeCustomer(data []byte) customer {
-	var c customer
+func makeCustomer(data []byte) Customer {
+	var c Customer
 	json.Unmarshal(data, &c)
 
 	return c

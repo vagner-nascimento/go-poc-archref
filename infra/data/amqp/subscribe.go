@@ -1,6 +1,7 @@
 package dataamqp
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/vagner-nascimento/go-poc-archref/app"
@@ -20,7 +21,7 @@ const (
 	mNoWait       = false
 )
 
-func SubscribeCustomer() error {
+func SubscribeConsumers() error {
 	conn, err := getConnection()
 	if err != nil {
 		return err
@@ -61,11 +62,18 @@ func SubscribeCustomer() error {
 	go func() {
 		for msg := range msgs {
 			infra.LogInfo(fmt.Sprintf("[customer subscriber] Message body %s", msg.Body))
-			app.CreateCustomer(msg.Body)
+			var c app.Customer
+			err := json.Unmarshal(msg.Body, &c)
+			if err == nil {
+				app.CreateCustomer(c)
+			} else {
+				infra.LogInfo("Invalid data type from Customer queue:\n" + string(msg.Body))
+			}
 		}
 	}()
 
-	keepListening := make(<-chan bool)
+	keepListening := make(chan bool)
+	infra.LogInfo("Listening to the queues: " + qName)
 	<-keepListening
 
 	return nil

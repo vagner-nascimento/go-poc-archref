@@ -4,7 +4,6 @@ import (
 	"fmt"
 )
 
-func addCustomer(data []byte) {
-	c := makeCustomer(data)
-	fmt.Println(c)
+func addCustomer(customer Customer) {
+	fmt.Println(customer)
 }
