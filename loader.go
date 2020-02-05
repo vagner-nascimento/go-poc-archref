@@ -2,7 +2,7 @@ package loader
 
 import (
 	"github.com/vagner-nascimento/go-poc-archref/infra"
-	dataamqp "github.com/vagner-nascimento/go-poc-archref/infra/data/amqp"
+	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
 func LoadSubscribers() {

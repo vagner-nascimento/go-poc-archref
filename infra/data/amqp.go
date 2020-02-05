@@ -3,10 +3,17 @@ package dataamqp
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+
+	"github.com/streadway/amqp"
 
 	"github.com/vagner-nascimento/go-poc-archref/app"
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
+
+type connSingleton struct {
+	AmqpConn *amqp.Connection
+}
 
 const (
 	qName         = "q-customer"
@@ -20,6 +27,27 @@ const (
 	mNoLocal      = false
 	mNoWait       = false
 )
+
+var (
+	amqpUrl   = "localhost"
+	amqpPort  = "5672"
+	amqpUser  = "guest"
+	amqpPass  = "guest"
+	connError error
+	singleton connSingleton
+	once      sync.Once
+)
+
+func getConnection() (*amqp.Connection, error) {
+	once.Do(func() {
+		singleton.AmqpConn, connError = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s", amqpUser, amqpPass, amqpUrl, amqpPort))
+		if connError == nil {
+			infra.LogInfo("Successfully connected in AMQP server")
+		}
+	})
+
+	return singleton.AmqpConn, connError
+}
 
 func SubscribeConsumers() error {
 	conn, err := getConnection()
