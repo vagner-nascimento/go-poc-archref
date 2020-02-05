@@ -2,11 +2,10 @@ package main
 
 import (
 	"github.com/vagner-nascimento/go-poc-archref/infra"
-	"github.com/vagner-nascimento/go-poc-archref/loader"
 )
 
 func main() {
 	infra.LogInfo("Application running")
 	infra.LogInfo("Loading subscribers...")
-	loader.LoadSubscribers()
+	loadSubscribers() // It MUST be always the last because it keeps listening to a channel to keep consumer connected
 }

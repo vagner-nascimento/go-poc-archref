@@ -1,9 +1,5 @@
 package app
 
-import (
-	"encoding/json"
-)
-
 type person struct {
 	Id   string `id: "id"`
 	Name string `name: "name"`
@@ -15,9 +11,8 @@ type Customer struct {
 	CreditCardHash string
 }
 
-func makeCustomer(data []byte) Customer {
-	var c Customer
-	json.Unmarshal(data, &c)
-
-	return c
+type User struct {
+	person
+	UseName  string `userName: "userName"`
+	Password string
 }

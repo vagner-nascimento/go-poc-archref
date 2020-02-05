@@ -1,11 +1,11 @@
-package loader
+package main
 
 import (
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
-func LoadSubscribers() {
+func loadSubscribers() {
 	err := dataamqp.SubscribeConsumers()
 	if err != nil {
 		infra.LogError("Error on load Customer subscriber", err)

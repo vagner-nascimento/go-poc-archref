@@ -11,22 +11,25 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
 
+type queueInfo struct {
+	QName         string
+	QDurable      bool
+	QDeleteUnused bool
+	QExclusive    bool
+	QNoWait       bool
+}
+
+type messageInfo struct {
+	MConsumer  string
+	MAutoAct   bool
+	MExclusive bool
+	MNoLocal   bool
+	MNoWait    bool
+}
+
 type connSingleton struct {
 	AmqpConn *amqp.Connection
 }
-
-const (
-	qName         = "q-customer"
-	qDurable      = false
-	qDeleteUnused = false
-	qExclusive    = false
-	qNoWait       = false
-	mConsumer     = "go-poc-archref"
-	mAutoAct      = true
-	mExclusive    = false
-	mNoLocal      = false
-	mNoWait       = false
-)
 
 var (
 	amqpUrl   = "localhost"
@@ -62,47 +65,58 @@ func SubscribeConsumers() error {
 	}
 	defer ch.Close()
 
+	cosumerFunc, err := customerSubscribe(ch)
+	if err != nil {
+		return err
+	}
+
+	go cosumerFunc()
+
+	keepListening := make(chan bool)
+	infra.LogInfo("Listening to the queues")
+	<-keepListening
+
+	return nil
+}
+
+func customerSubscribe(ch *amqp.Channel) (func(), error) {
+	customerInfo := getCustomerInfo()
 	q, err := ch.QueueDeclare(
-		qName,
-		qDurable,
-		qDeleteUnused,
-		qExclusive,
-		qNoWait,
+		customerInfo.Queue.QName,
+		customerInfo.Queue.QDurable,
+		customerInfo.Queue.QDeleteUnused,
+		customerInfo.Queue.QExclusive,
+		customerInfo.Queue.QNoWait,
 		nil, // Queue Table Args
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msgs, err := ch.Consume(
 		q.Name,
-		mConsumer,
-		mAutoAct,
-		mExclusive,
-		mNoLocal,
-		mNoWait,
+		customerInfo.Message.MConsumer,
+		customerInfo.Message.MAutoAct,
+		customerInfo.Message.MExclusive,
+		customerInfo.Message.MNoLocal,
+		customerInfo.Message.MNoWait,
 		nil,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	go func() {
+	return func() {
 		for msg := range msgs {
 			infra.LogInfo(fmt.Sprintf("[customer subscriber] Message body %s", msg.Body))
 			var c app.Customer
 			err := json.Unmarshal(msg.Body, &c)
+
 			if err == nil {
 				app.CreateCustomer(c)
 			} else {
 				infra.LogInfo("Invalid data type from Customer queue:\n" + string(msg.Body))
 			}
 		}
-	}()
-
-	keepListening := make(chan bool)
-	infra.LogInfo("Listening to the queues: " + qName)
-	<-keepListening
-
-	return nil
+	}, nil
 }
