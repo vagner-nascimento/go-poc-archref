@@ -1,8 +1,6 @@
-package amqp
+package data
 
 import (
-	"errors"
-
 	"github.com/vagner-nascimento/go-poc-archref/app"
 )
 
@@ -15,15 +13,13 @@ func (cp *userPublisher) Save(user *app.User) error {
 }
 
 func (cp *userPublisher) Get(id string) (app.User, error) {
-	u := app.User{} // Usar NEW
-	return u, errors.New("Not implemented")
+	return app.User{}, notImplementedError()
 }
 
 func (cp *userPublisher) GetMany(params ...interface{}) ([]app.User, error) {
-	u := []app.User{} //Usar NEW
-	return u, errors.New("Not implemented")
+	return []app.User{}, notImplementedError()
 }
 
 func (cp *userPublisher) Update(user *app.User) error {
-	return errors.New("Not implemented")
+	return notImplementedError()
 }

@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/vagner-nascimento/go-poc-archref/infra"
-	"github.com/vagner-nascimento/go-poc-archref/infra/amqp"
+	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
 func loadSubscribers() {
-	err := amqp.SubscribeConsumers()
+	err := data.SubscribeConsumers()
 	if err != nil {
 		infra.LogError("Error on load Customer subscriber", err)
 	} else {

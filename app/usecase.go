@@ -6,8 +6,15 @@ import (
 )
 
 func addCustomer(c *Customer) error {
-	c.repository.Save(c)
+	c.CreditCardHash = "CardHash"
+
+	err := c.save()
+	if err != nil {
+		return err
+	}
+
 	b, _ := json.Marshal(*c)
-	fmt.Println("Saved customer", string(b))
-	return c.repository.Save(c)
+	fmt.Println("saved customer", string(b))
+
+	return nil
 }

@@ -1,13 +1,13 @@
 package app
 
-type CustomerDataIterable interface {
+type CustomerDataHandler interface {
 	Save(c *Customer) error
+	Update(c *Customer) error
 	Get(id string) (Customer, error)
 	GetMany(params ...interface{}) ([]Customer, error)
-	Update(c *Customer) error
 }
 
-type UserDataIterable interface {
+type UserDataHandler interface {
 	Save(user *User) error
 	Get(id string) (User, error)
 	GetMany(params ...interface{}) ([]User, error)
