@@ -5,6 +5,9 @@ func CreateCustomer(c *Customer) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
+func CreateUser(u *User, c Customer) error {
 	return nil
 }

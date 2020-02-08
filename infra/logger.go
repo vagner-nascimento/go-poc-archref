@@ -1,8 +1,6 @@
 package infra
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func LogInfo(msg string) {
 	fmt.Println(msg)

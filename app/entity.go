@@ -14,6 +14,13 @@ type Customer struct {
 	repository     CustomerDataIterable
 }
 
+type User struct {
+	person
+	UseName    string `userName: "userName"`
+	Password   string
+	repository UserDataIterable
+}
+
 func NewCustomer(repo CustomerDataIterable) (Customer, error) {
 	var c Customer
 	if repo == nil {
@@ -21,6 +28,17 @@ func NewCustomer(repo CustomerDataIterable) (Customer, error) {
 	}
 
 	c = Customer{repository: repo}
+
+	return c, nil
+}
+
+func NewUser(repo UserDataIterable) (User, error) {
+	var c User
+	if repo == nil {
+		return c, errors.New("Repository must be informed")
+	}
+
+	c = User{repository: repo}
 
 	return c, nil
 }

@@ -6,3 +6,10 @@ type CustomerDataIterable interface {
 	GetMany(params ...interface{}) ([]Customer, error)
 	Update(c *Customer) error
 }
+
+type UserDataIterable interface {
+	Save(user *User) error
+	Get(id string) (User, error)
+	GetMany(params ...interface{}) ([]User, error)
+	Update(user *User) error
+}
