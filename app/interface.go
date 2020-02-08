@@ -1,9 +1,8 @@
 package app
 
-type DataIterable interface {
-	Save(customer *Customer) (Customer, error)
+type CustomerDataIterable interface {
+	Save(c *Customer) error
 	Get(id string) (Customer, error)
 	GetMany(params ...interface{}) ([]Customer, error)
-	Update(customer *Customer) (Customer, error)
-	Subscribe() (<-chan bool, error)
+	Update(c *Customer) error
 }

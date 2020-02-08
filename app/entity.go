@@ -1,8 +1,6 @@
 package app
 
-import (
-	"encoding/json"
-)
+import "errors"
 
 type person struct {
 	Id   string `id: "id"`
@@ -13,11 +11,16 @@ type Customer struct {
 	person
 	Alias          string `alias: "alias"`
 	CreditCardHash string
+	repository     CustomerDataIterable
 }
 
-func makeCustomer(data []byte) Customer {
+func NewCustomer(repo CustomerDataIterable) (Customer, error) {
 	var c Customer
-	json.Unmarshal(data, &c)
+	if repo == nil {
+		return c, errors.New("Repository must be informed")
+	}
 
-	return c
+	c = Customer{repository: repo}
+
+	return c, nil
 }

@@ -1,4 +1,4 @@
-package dataamqp
+package amqp
 
 import (
 	"fmt"

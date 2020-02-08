@@ -1,8 +1,9 @@
-package dataamqp
+package amqp
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vagner-nascimento/go-poc-archref/infra/nosql"
 
 	"github.com/vagner-nascimento/go-poc-archref/app"
 	"github.com/vagner-nascimento/go-poc-archref/infra"
@@ -62,10 +63,12 @@ func SubscribeConsumers() error {
 	go func() {
 		for msg := range msgs {
 			infra.LogInfo(fmt.Sprintf("[customer subscriber] Message body %s", msg.Body))
-			var c app.Customer
+			c, _ := app.NewCustomer(nosql.New())
+
 			err := json.Unmarshal(msg.Body, &c)
+
 			if err == nil {
-				app.CreateCustomer(c)
+				app.CreateCustomer(&c)
 			} else {
 				infra.LogInfo("Invalid data type from Customer queue:\n" + string(msg.Body))
 			}
