@@ -8,6 +8,10 @@ type person struct {
 type Customer struct {
 	person
 	CreditCardHash string
+	BirthYear      int    `birthYear: "birthYear"`
+	BirthDay       int    `birthDay: "birthDay"`
+	BirthMont      int    `birthMont: "birthMonth"`
+	EMail          string `eMail: "eMail"`
 	data           CustomerDataHandler
 }
 

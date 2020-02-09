@@ -10,7 +10,6 @@ import (
 
 // TODO: Implement userDb to call mongo connection
 type userDb struct {
-	db mongo
 }
 
 func (o *userDb) Save(c *app.User) error {

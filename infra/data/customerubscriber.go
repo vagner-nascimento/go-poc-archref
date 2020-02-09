@@ -42,7 +42,7 @@ func newCustomerSub() *customerSub {
 			NoWait:    false,
 		},
 		handler: func(data []byte) {
-			c := app.NewCustomer(&customerDb{db: mongo{}})
+			c := app.NewCustomer(&customerDb{})
 			err := json.Unmarshal(data, &c)
 			if err == nil {
 				err = app.CreateCustomer(c)
@@ -50,6 +50,7 @@ func newCustomerSub() *customerSub {
 					infra.LogError("error on create a customer", err)
 				} else {
 					infra.LogInfo("customer created")
+					// TODO save user and send to queue with his ID
 					go publish(newUserPub(data))
 				}
 			} else {
