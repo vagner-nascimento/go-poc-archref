@@ -50,6 +50,7 @@ func newCustomerSub() *customerSub {
 					infra.LogError("error on create a customer", err)
 				} else {
 					infra.LogInfo("customer created")
+					go publish(newUserPub(data))
 				}
 			} else {
 				infra.LogError("error on convert message's body into a customer", err)

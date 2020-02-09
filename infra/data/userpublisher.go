@@ -1,25 +1,42 @@
 package data
 
 import (
-	"github.com/vagner-nascimento/go-poc-archref/app"
+	"github.com/streadway/amqp"
 )
 
-type userPublisher struct {
+type userPub struct {
+	queueInfo
+	messageInfo
+	data []byte
 }
 
-func (cp *userPublisher) Save(user *app.User) error {
-	// TODO: User publisher send implementation
-	return nil
+func (o userPub) QueueInfo() queueInfo {
+	return o.queueInfo
 }
 
-func (cp *userPublisher) Get(id string) (app.User, error) {
-	return app.User{}, notImplementedError()
+func (o userPub) MessageInfo() messageInfo {
+	return o.messageInfo
 }
 
-func (cp *userPublisher) GetMany(params ...interface{}) ([]app.User, error) {
-	return []app.User{}, notImplementedError()
-}
-
-func (cp *userPublisher) Update(user *app.User) error {
-	return notImplementedError()
+func newUserPub(data []byte) userPub {
+	return userPub{
+		queueInfo: queueInfo{
+			Name:       "q-user",
+			Durable:    false,
+			AutoDelete: false,
+			Exclusive:  false,
+			NoWait:     false,
+			Args:       nil,
+		},
+		messageInfo: messageInfo{
+			Exchange:  "",
+			Mandatory: false,
+			Immediate: false,
+			Publishing: amqp.Publishing{
+				ContentType: "application/json",
+				Body:        data,
+			},
+			Args: nil,
+		},
+	}
 }

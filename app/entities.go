@@ -17,10 +17,16 @@ func (c *Customer) save() error {
 
 type User struct {
 	person
+	Customer Customer
 	UseName  string `userName: "userName"`
 	Password string
+	data     UserDataHandler
 }
 
 func NewCustomer(db CustomerDataHandler) *Customer {
 	return &Customer{data: db}
+}
+
+func NewUser(db UserDataHandler) *User {
+	return &User{data: db}
 }

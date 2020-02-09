@@ -8,8 +8,8 @@ type CustomerDataHandler interface {
 }
 
 type UserDataHandler interface {
-	Save(user *User) error
+	Save(u *User) error
+	Update(u *User) error
 	Get(id string) (User, error)
 	GetMany(params ...interface{}) ([]User, error)
-	Update(user *User) error
 }

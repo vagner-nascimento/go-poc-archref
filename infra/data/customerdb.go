@@ -3,6 +3,8 @@ package data
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/vagner-nascimento/go-poc-archref/app"
 )
 
@@ -11,20 +13,20 @@ type customerDb struct {
 	db mongo
 }
 
-func (m *customerDb) Save(c *app.Customer) error {
-	c.Id = "newUuid"
+func (o *customerDb) Save(c *app.Customer) error {
+	c.Id = "fake_" + uuid.New().String()
 	fmt.Println("(fake customerDd) customer save")
 	return nil
 }
 
-func (m *customerDb) Get(id string) (app.Customer, error) {
+func (o *customerDb) Get(id string) (app.Customer, error) {
 	return app.Customer{}, notImplementedError()
 }
 
-func (m *customerDb) GetMany(params ...interface{}) ([]app.Customer, error) {
+func (o *customerDb) GetMany(params ...interface{}) ([]app.Customer, error) {
 	return []app.Customer{}, notImplementedError()
 }
 
-func (m *customerDb) Update(c *app.Customer) error {
+func (o *customerDb) Update(c *app.Customer) error {
 	return notImplementedError()
 }

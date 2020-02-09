@@ -17,20 +17,32 @@ type (
 		Name         string
 		Durable      bool
 		DeleteUnused bool
+		AutoDelete   bool
 		Exclusive    bool
 		NoWait       bool
+		Args         amqp.Table
 	}
 	messageInfo struct {
-		Consumer  string
-		AutoAct   bool
-		Exclusive bool
-		Local     bool
-		NoWait    bool
+		Consumer   string
+		AutoAct    bool
+		Exclusive  bool
+		Local      bool
+		NoWait     bool
+		Exchange   string
+		Mandatory  bool
+		Immediate  bool
+		Publishing amqp.Publishing
+		Args       amqp.Table
 	}
 	queueConsumer interface {
 		QueueInfo() queueInfo
 		MessageInfo() messageInfo
 		MessageHandler() func([]byte)
+	}
+
+	queuePublishHandler interface {
+		QueueInfo() queueInfo
+		MessageInfo() messageInfo
 	}
 )
 
@@ -53,6 +65,38 @@ func amqpConnection() (*amqp.Connection, error) {
 	})
 
 	return singleton.AmqpConn, connError
+}
+
+func publish(p queuePublishHandler) error {
+	conn, err := amqpConnection()
+	if err != nil {
+		return err
+	}
+
+	ch, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+
+	q, err := ch.QueueDeclare(
+		p.QueueInfo().Name,
+		p.QueueInfo().Durable,
+		p.QueueInfo().AutoDelete,
+		p.QueueInfo().Exclusive,
+		p.QueueInfo().NoWait,
+		p.QueueInfo().Args,
+	)
+
+	ch.Publish(
+		p.MessageInfo().Exchange,
+		q.Name,
+		p.MessageInfo().Mandatory,
+		p.MessageInfo().Immediate,
+		p.MessageInfo().Publishing,
+	)
+
+	infra.LogInfo("message published on" + q.Name)
+	return nil
 }
 
 func SubscribeConsumers() error {
