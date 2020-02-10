@@ -7,26 +7,26 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
 
-type customerSub struct {
+type customerSubscriber struct {
 	queueInfo
 	messageInfo
 	handler func(data []byte)
 }
 
-func (o customerSub) QueueInfo() queueInfo {
+func (o customerSubscriber) QueueInfo() queueInfo {
 	return o.queueInfo
 }
 
-func (o customerSub) MessageInfo() messageInfo {
+func (o customerSubscriber) MessageInfo() messageInfo {
 	return o.messageInfo
 }
 
-func (o customerSub) MessageHandler() func([]byte) {
+func (o customerSubscriber) MessageHandler() func([]byte) {
 	return o.handler
 }
 
-func newCustomerSub() *customerSub {
-	return &customerSub{
+func newCustomerSub() *customerSubscriber {
+	return &customerSubscriber{
 		queueInfo: queueInfo{
 			Name:         "q-customer",
 			Durable:      false,
@@ -50,7 +50,7 @@ func newCustomerSub() *customerSub {
 					infra.LogError("error on create a customer", err)
 				} else {
 					infra.LogInfo("customer created")
-					// TODO save user and send to queue with his ID
+					// TODO save user and send to queue with its ID
 					go publish(newUserPub(data))
 				}
 			} else {

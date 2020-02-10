@@ -1,17 +1,13 @@
 package app
 
-type person struct {
-	Id   string `id: "id"`
-	Name string `name: "name"`
-}
-
 type Customer struct {
-	person
-	CreditCardHash string
-	BirthYear      int    `birthYear: "birthYear"`
-	BirthDay       int    `birthDay: "birthDay"`
-	BirthMont      int    `birthMont: "birthMonth"`
+	Id             string `id: "id"`
+	Name           string `name: "name"`
 	EMail          string `eMail: "eMail"`
+	CreditCardHash string
+	BirthYear      int `birthYear: "birthYear"`
+	BirthDay       int `birthDay: "birthDay"`
+	BirthMont      int `birthMont: "birthMonth"`
 	data           CustomerDataHandler
 }
 
@@ -20,7 +16,9 @@ func (c *Customer) save() error {
 }
 
 type User struct {
-	person
+	Id       string `id: "id"`
+	Name     string `name: "name"`
+	EMail    string `eMail: "eMail"`
 	Customer Customer
 	UseName  string `userName: "userName"`
 	Password string

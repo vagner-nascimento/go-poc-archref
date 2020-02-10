@@ -8,8 +8,8 @@ import (
 func loadSubscribers() {
 	err := data.SubscribeConsumers()
 	if err != nil {
-		infra.LogError("Error on load Customer subscriber", err)
+		infra.LogError("error on load Customer subscriber", err)
 	} else {
-		infra.LogInfo("Customer subscriber loaded")
+		infra.LogInfo("customer subscriber loaded")
 	}
 }

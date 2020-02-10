@@ -7,5 +7,5 @@ func LogInfo(msg string) {
 }
 
 func LogError(msg string, err error) {
-	fmt.Printf("%s: %s\n", msg, err)
+	fmt.Println(msg+":", err)
 }

@@ -3,41 +3,34 @@ package data
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/vagner-nascimento/go-poc-archref/app"
+	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
 
 type customerDb struct {
 }
 
-// TODO: properly implements mongo connection
-// TODO: realise why name, id and other properties was not save into database
 func (o *customerDb) Save(c *app.Customer) error {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://admin:admin@localhost:27017"))
+	client, err := mongoDbClient()
 	if err != nil {
-		fmt.Println("Error on mongo connections")
-		fmt.Println(err)
-		return err
+		infra.LogError("error on try connect into mongo db", err)
+		return connectionError("database server")
 	}
-	defer client.Disconnect(ctx)
 
 	c.Id = uuid.New().String()
 	collection := client.Database("golang").Collection("customers")
-	res, err := collection.InsertOne(ctx, c)
+	res, err := collection.InsertOne(context.TODO(), c)
 	if err != nil {
-		fmt.Println("Error on insert on collection")
-		fmt.Println(err)
-		return err
+		infra.LogError("error on try insert data on customer collection", err)
+		return execError("save", "customer")
 	}
 
 	fmt.Println("Data inserted. insert response")
 	fmt.Println(res)
+
 	return nil
 }
 

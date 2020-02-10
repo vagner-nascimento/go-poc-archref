@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/streadway/amqp"
 
@@ -10,9 +9,6 @@ import (
 )
 
 type (
-	connSingleton struct {
-		AmqpConn *amqp.Connection
-	}
 	queueInfo struct {
 		Name         string
 		Durable      bool
@@ -47,35 +43,21 @@ type (
 )
 
 var (
-	amqpUrl   = "localhost"
-	amqpPort  = "5672"
-	amqpUser  = "guest"
-	amqpPass  = "guest"
-	connError error
-	singleton connSingleton
-	once      sync.Once
+	amqpUrl  = "localhost"
+	amqpPort = "5672"
+	amqpUser = "guest"
+	amqpPass = "guest"
 )
 
-func amqpConnection() (*amqp.Connection, error) {
-	once.Do(func() {
-		singleton.AmqpConn, connError = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s", amqpUser, amqpPass, amqpUrl, amqpPort))
-		if connError == nil {
-			infra.LogInfo("Successfully connected in AMQP server")
-		}
-	})
-
-	return singleton.AmqpConn, connError
+func handleAmqError(err error) error {
+	infra.LogError("error on try to get amqp channel", err)
+	return connectionError("amqp server")
 }
 
 func publish(p queuePublishHandler) error {
-	conn, err := amqpConnection()
+	ch, err := amqpChannel()
 	if err != nil {
-		return err
-	}
-
-	ch, err := conn.Channel()
-	if err != nil {
-		return err
+		return handleAmqError(err)
 	}
 
 	q, err := ch.QueueDeclare(
@@ -95,32 +77,26 @@ func publish(p queuePublishHandler) error {
 		p.MessageInfo().Publishing,
 	)
 
-	infra.LogInfo("message published on" + q.Name)
+	infra.LogInfo("message published into" + q.Name)
 	return nil
 }
 
 func SubscribeConsumers() error {
-	conn, err := amqpConnection()
+	ch, err := amqpChannel()
 	if err != nil {
-		return err
+		return handleAmqError(err)
 	}
-	defer conn.Close()
 
-	ch, err := conn.Channel()
+	customerSub := newCustomerSub()
+	customerReader, err := messageReader(ch, customerSub)
 	if err != nil {
-		return err
-	}
-	defer ch.Close()
-
-	customerReader, err := messageReader(ch, newCustomerSub())
-	if err != nil {
-		return err
+		return handleAmqError(err)
 	}
 
 	go customerReader()
 
 	keepListening := make(chan bool)
-	infra.LogInfo("Listening to the queues")
+	infra.LogInfo("listening to the queues: " + customerSub.QueueInfo().Name)
 	<-keepListening
 
 	return nil
