@@ -1,8 +1,6 @@
 package data
 
 import (
-	"fmt"
-
 	"github.com/streadway/amqp"
 
 	"github.com/vagner-nascimento/go-poc-archref/infra"
@@ -77,7 +75,7 @@ func publish(p queuePublishHandler) error {
 		p.MessageInfo().Publishing,
 	)
 
-	infra.LogInfo("message published into" + q.Name)
+	infra.LogInfo("message published into", q.Name)
 	return nil
 }
 
@@ -132,7 +130,7 @@ func messageReader(ch *amqp.Channel, consumer queueConsumer) (func(), error) {
 
 	return func() {
 		for msg := range msgs {
-			infra.LogInfo(fmt.Sprintf("Message erecieved:  %s", msg.Body))
+			infra.LogInfo("message received", string(msg.Body))
 			handleMessage(msg.Body)
 		}
 	}, nil

@@ -1,19 +1,22 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
+	"math/rand"
+	"strings"
 )
 
 func addCustomer(c *Customer) error {
-	c.CreditCardHash = "fake_22FB265865D30BE2E9362CFF01D5B95DCDCEC27D06DE4EEB042B67C0C72FE622"
+	c.CreditCardHash = "fake_"
+	for i := 0; i < 5; i = i + 1 {
+		c.CreditCardHash += strings.Split(fmt.Sprintf("%f", rand.Float64()), ".")[1]
+	}
+
 	err := c.save()
+
 	if err != nil {
 		return err
 	}
-
-	b, _ := json.Marshal(*c)
-	fmt.Println("saved customer", string(b))
 
 	return nil
 }

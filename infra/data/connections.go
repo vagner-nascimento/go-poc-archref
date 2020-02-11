@@ -62,6 +62,7 @@ func CloseConnections() {
 	if err != nil {
 		infra.LogError("error on close mongo db connection", err)
 	}
+	infra.LogInfo("disconnected from mongo db")
 
 	if !singletons.amqoConn.IsClosed() {
 		err := singletons.amqpChannel.Close()
@@ -74,4 +75,5 @@ func CloseConnections() {
 			infra.LogError("error on close amqp connection", err)
 		}
 	}
+	infra.LogInfo("disconnected from amqp server")
 }

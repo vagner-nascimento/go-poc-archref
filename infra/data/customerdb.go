@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 
@@ -22,14 +21,11 @@ func (o *customerDb) Save(c *app.Customer) error {
 
 	c.Id = uuid.New().String()
 	collection := client.Database("golang").Collection("customers")
-	res, err := collection.InsertOne(context.TODO(), c)
+	_, err = collection.InsertOne(context.TODO(), c)
 	if err != nil {
 		infra.LogError("error on try insert data on customer collection", err)
 		return execError("save", "customer")
 	}
-
-	fmt.Println("Data inserted. insert response")
-	fmt.Println(res)
 
 	return nil
 }

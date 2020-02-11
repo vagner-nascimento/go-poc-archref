@@ -50,8 +50,10 @@ func newCustomerSub() *customerSubscriber {
 					infra.LogError("error on create a customer", err)
 				} else {
 					infra.LogInfo("customer created")
-					// TODO save user and send to queue with its ID
-					go publish(newUserPub(data))
+
+					u := app.NewUserFromCustomer(*c)
+					uBytes, _ := json.Marshal(u)
+					go publish(newUserPub(uBytes))
 				}
 			} else {
 				infra.LogError("error on convert message's body into a customer", err)
