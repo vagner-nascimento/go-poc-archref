@@ -15,3 +15,9 @@
 
 # IDEA files
 .idea/
+
+# Log files
+*.log
+
+# Go compiled app files
+main

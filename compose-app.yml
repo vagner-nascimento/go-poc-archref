@@ -1,0 +1,51 @@
+version: '3.7'
+
+services:
+  go-app:
+    container_name: go-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - GO_ENV=docker
+    ports:
+      - 3000:3000
+    depends_on:
+      - go-rabbit-mq
+      - go-mongodb
+    networks:
+      - go-network
+
+  go-rabbit-mq:
+    container_name: go-rabbit-mq
+    image: rabbitmq:3.6-management-alpine
+    ports:
+      - 5672:5672 # The standard AMQP protocol port
+      - 15672:15672 # HTTP management UI
+    volumes:
+      - rabitmq:/etc/rabbitmq/
+    networks:
+      - go-network
+
+  go-mongodb:
+    image: mongo
+    container_name: go-mongodb
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    volumes:
+      - mongodb:/data/db
+      - mongoconfig:/data/configdb
+    networks:
+      - go-network
+
+volumes: # default dir on Ubuntu: /var/lib/docker/volumes
+  mongodb:
+  mongoconfig:
+  rabitmq:
+
+networks:
+  go-network:
+    driver: bridge
