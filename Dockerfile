@@ -1,5 +1,8 @@
 FROM golang:alpine
 
+# Install bash
+RUN apk update && apk add bash
+#RUN apk add --no-cache bash # for alpine 3+
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
@@ -11,26 +14,26 @@ ENV GO111MODULE=on \
 # Move to working directory /build
 WORKDIR /build
 
-# Copy and download dependency using go mod
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
 # Copy the code into the container
 COPY . .
+
+# Download dependency using go mod
+RUN go mod download
 
 # Build the application
 RUN go build -o main .
 
-# Move to /dist directory as the place for resulting binary folder
-WORKDIR /dist
-COPY wait-for.sh .
+# Move wait for scipt for root folder
+RUN mkdir /scripts
+RUN mv wait-for-it.sh /scripts
 
+# Make app folder
+RUN mkdir /app
 # Copy binary from build to main folder
-RUN cp /build/main .
+RUN cp main /app
+
+# Command to run when starting the container (called by wait-for-it.sh into app docker compose file)
+#ENTRYPOINT /app/main
 
 # Export necessary port
 EXPOSE 3000
-
-# Command to run when starting the container
-CMD ["/dist/main"]

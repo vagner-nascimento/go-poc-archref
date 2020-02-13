@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 
@@ -29,7 +28,6 @@ var (
 )
 
 func amqpChannel() (*amqp.Channel, error) {
-	fmt.Println("GO_ENV rabbit", goEnv)
 	var err error
 	amqpOnce.Do(func() {
 		if goEnv == "docker" {
@@ -52,7 +50,6 @@ func amqpChannel() (*amqp.Channel, error) {
 }
 
 func mongoDbClient() (*mongo.Client, error) {
-	fmt.Println("GO_ENV mongo", goEnv)
 	var err error
 	mongoOne.Do(func() {
 		var cliOpts *options.ClientOptions
@@ -74,26 +71,4 @@ func mongoDbClient() (*mongo.Client, error) {
 	})
 
 	return singletons.mongoClient, err
-}
-
-func CloseConnections() {
-	err := singletons.mongoClient.Disconnect(context.TODO())
-	if err != nil {
-		infra.LogError("error on close mongo db connection", err)
-	}
-
-	infra.LogInfo("disconnected from mongo db")
-
-	if !singletons.amqoConn.IsClosed() {
-		err := singletons.amqpChannel.Close()
-		if err != nil {
-			infra.LogError("error on close amqp channel", err)
-		}
-
-		err = singletons.amqoConn.Close()
-		if err != nil {
-			infra.LogError("error on close amqp connection", err)
-		}
-	}
-	infra.LogInfo("disconnected from amqp server")
 }

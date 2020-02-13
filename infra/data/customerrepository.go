@@ -2,9 +2,7 @@ package data
 
 import (
 	"context"
-
 	"github.com/google/uuid"
-
 	"github.com/vagner-nascimento/go-poc-archref/app"
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )

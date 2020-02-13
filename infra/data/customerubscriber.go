@@ -1,8 +1,6 @@
 package data
 
 import (
-	"encoding/json"
-
 	"github.com/vagner-nascimento/go-poc-archref/app"
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
@@ -42,21 +40,19 @@ func newCustomerSub() *customerSubscriber {
 			NoWait:    false,
 		},
 		handler: func(data []byte) {
-			c := app.NewCustomer(&customerDb{})
-			err := json.Unmarshal(data, &c)
+			c, err := app.NewCustomerFromBytes(data)
 			if err == nil {
-				err = app.CreateCustomer(c)
+				err = app.AddCustomer(&c, &customerDb{})
 				if err != nil {
 					infra.LogError("error on create a customer", err)
 				} else {
 					infra.LogInfo("customer created")
 
-					u := app.NewUserFromCustomer(*c)
-					uBytes, _ := json.Marshal(u)
-					go publish(newUserPub(uBytes))
+					u := app.NewUserFromCustomer(c)
+					go app.AddUser(&u, &userRepository{})
 				}
 			} else {
-				infra.LogError("error on convert message's body into a customer", err)
+				infra.LogError("error on convert message's body into a Customer", err)
 			}
 		},
 	}

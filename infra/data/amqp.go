@@ -34,7 +34,7 @@ type (
 		MessageHandler() func([]byte)
 	}
 
-	queuePublishHandler interface {
+	queuePublisher interface {
 		QueueInfo() queueInfo
 		MessageInfo() messageInfo
 	}
@@ -52,7 +52,7 @@ func handleAmqError(err error) error {
 	return connectionError("amqp server")
 }
 
-func publish(p queuePublishHandler) error {
+func publish(p queuePublisher) error {
 	ch, err := amqpChannel()
 	if err != nil {
 		return handleAmqError(err)
@@ -75,7 +75,7 @@ func publish(p queuePublishHandler) error {
 		p.MessageInfo().Publishing,
 	)
 
-	infra.LogInfo("message published into", q.Name)
+	infra.LogInfo("message published into", p.QueueInfo().Name)
 	return nil
 }
 

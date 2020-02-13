@@ -4,22 +4,22 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type userPub struct {
+type userPubInfo struct {
 	queueInfo
 	messageInfo
 	data []byte
 }
 
-func (o userPub) QueueInfo() queueInfo {
+func (o userPubInfo) QueueInfo() queueInfo {
 	return o.queueInfo
 }
 
-func (o userPub) MessageInfo() messageInfo {
+func (o userPubInfo) MessageInfo() messageInfo {
 	return o.messageInfo
 }
 
-func newUserPub(data []byte) userPub {
-	return userPub{
+func newUserPub(data []byte) userPubInfo {
+	return userPubInfo{
 		queueInfo: queueInfo{
 			Name:       "q-user",
 			Durable:    false,

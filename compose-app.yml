@@ -6,15 +6,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      - GO_ENV=docker
-    ports:
-      - 3000:3000
     depends_on:
       - go-rabbit-mq
       - go-mongodb
+    environment:
+      - GO_ENV=docker
+    restart: on-failure
+    ports:
+      - 3000:3000
     networks:
       - go-network
+    command: >
+      bash -c "/scripts/wait-for-it.sh -t 8 go-rabbit-mq:5672 &&
+      /scripts/wait-for-it.sh -t 5 go-mongodb:27017 -- /app/main"
 
   go-rabbit-mq:
     container_name: go-rabbit-mq

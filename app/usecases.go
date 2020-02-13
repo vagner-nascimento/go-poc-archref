@@ -1,21 +1,16 @@
 package app
 
-import (
-	"fmt"
-	"math/rand"
-	"strings"
-)
+import "errors"
 
-func addCustomer(c *Customer) error {
-	c.CreditCardHash = "fake_"
-	for i := 0; i < 5; i = i + 1 {
-		c.CreditCardHash += strings.Split(fmt.Sprintf("%f", rand.Float64()), ".")[1]
-	}
+func createCustomer(c *Customer) *Customer {
+	c.setCreditCardHash()
 
-	err := c.save()
+	return c
+}
 
-	if err != nil {
-		return err
+func validateUser(u User) error {
+	if u.CustomerId == "" {
+		return errors.New("customer id not informed")
 	}
 
 	return nil
