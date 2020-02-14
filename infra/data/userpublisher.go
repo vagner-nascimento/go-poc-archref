@@ -4,10 +4,11 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// TODO make it a class that uses amqp
 type userPubInfo struct {
-	queueInfo
-	messageInfo
-	data []byte
+	queueInfo   queueInfo
+	messageInfo messageInfo
+	data        []byte
 }
 
 func (o userPubInfo) QueueInfo() queueInfo {
@@ -18,7 +19,7 @@ func (o userPubInfo) MessageInfo() messageInfo {
 	return o.messageInfo
 }
 
-func newUserPub(data []byte) userPubInfo {
+func NewUserPub(data []byte) userPubInfo {
 	return userPubInfo{
 		queueInfo: queueInfo{
 			Name:       "q-user",

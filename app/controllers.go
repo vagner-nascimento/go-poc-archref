@@ -9,6 +9,5 @@ func AddUser(u *User, data UserDataHandler) error {
 	if err == nil {
 		return data.Save(u)
 	}
-
 	return err
 }

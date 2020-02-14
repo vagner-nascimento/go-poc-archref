@@ -3,9 +3,7 @@ version: '3.7'
 services:
   go-app:
     container_name: go-app
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     depends_on:
       - go-rabbit-mq
       - go-mongodb

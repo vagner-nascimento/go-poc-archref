@@ -4,14 +4,14 @@ import (
 	"errors"
 )
 
-func notImplementedError() error {
+func NotImplementedError() error {
 	return errors.New("function not implemented")
 }
 
-func connectionError(resource string) error {
+func ConnectionError(resource string) error {
 	return errors.New("cannot connect into " + resource)
 }
 
-func execError(operation string, entity string) error {
+func ExecError(operation string, entity string) error {
 	return errors.New("cannot " + operation + " " + entity + "'s data")
 }

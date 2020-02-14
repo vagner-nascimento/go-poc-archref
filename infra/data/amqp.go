@@ -1,8 +1,11 @@
 package data
 
 import (
+	"sync"
+
 	"github.com/streadway/amqp"
 
+	"github.com/vagner-nascimento/go-poc-archref/environment"
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
 
@@ -33,29 +36,33 @@ type (
 		MessageInfo() messageInfo
 		MessageHandler() func([]byte)
 	}
-
 	queuePublisher interface {
 		QueueInfo() queueInfo
 		MessageInfo() messageInfo
 	}
+	amqpConfigTp struct {
+		once       sync.Once
+		localConn  string
+		dockerConn string
+	}
 )
 
 var (
-	amqpUrl  = "localhost"
-	amqpPort = "5672"
-	amqpUser = "guest"
-	amqpPass = "guest"
+	// TODO: Amqp - realise how put it on app config
+	singletonAmqp struct {
+		amqoConn    *amqp.Connection
+		amqpChannel *amqp.Channel
+	}
+	amqpConfig = amqpConfigTp{
+		localConn:  "amqp://guest:guest@localhost:5672",
+		dockerConn: "amqp://guest:guest@go-rabbit-mq:5672",
+	}
 )
 
-func handleAmqError(err error) error {
-	infra.LogError("error on try to get amqp channel", err)
-	return connectionError("amqp server")
-}
-
-func publish(p queuePublisher) error {
-	ch, err := amqpChannel()
+func PublishMessage(p queuePublisher) error {
+	ch, err := amqpConnect()
 	if err != nil {
-		return handleAmqError(err)
+		return handleAmqConnectionError(err)
 	}
 
 	q, err := ch.QueueDeclare(
@@ -80,15 +87,15 @@ func publish(p queuePublisher) error {
 }
 
 func SubscribeConsumers() error {
-	ch, err := amqpChannel()
+	ch, err := amqpConnect()
 	if err != nil {
-		return handleAmqError(err)
+		return handleAmqConnectionError(err)
 	}
 
-	customerSub := newCustomerSub()
+	customerSub := NewCustomerSub()
 	customerReader, err := messageReader(ch, customerSub)
 	if err != nil {
-		return handleAmqError(err)
+		return handleAmqConnectionError(err)
 	}
 
 	go customerReader()
@@ -134,4 +141,31 @@ func messageReader(ch *amqp.Channel, consumer queueConsumer) (func(), error) {
 			handleMessage(msg.Body)
 		}
 	}, nil
+}
+
+func amqpConnect() (*amqp.Channel, error) {
+	var err error
+	amqpConfig.once.Do(func() {
+		if environment.GetEnv() == "docker" {
+			singletonAmqp.amqoConn, err = amqp.Dial(amqpConfig.dockerConn)
+		} else {
+			singletonAmqp.amqoConn, err = amqp.Dial(amqpConfig.localConn)
+		}
+
+		if err == nil {
+			infra.LogInfo("successfully connected into AMQP server")
+
+			singletonAmqp.amqpChannel, err = singletonAmqp.amqoConn.Channel()
+			if err == nil {
+				infra.LogInfo("successfully created AMQP channel")
+			}
+		}
+	})
+
+	return singletonAmqp.amqpChannel, err
+}
+
+func handleAmqConnectionError(err error) error {
+	infra.LogError("error on try to get amqp channel", err)
+	return ConnectionError("amqp server")
 }

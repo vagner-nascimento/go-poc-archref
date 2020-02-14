@@ -1,6 +1,6 @@
 FROM golang:alpine
 
-# Install bash
+# Install bash to use at compose commands
 RUN apk update && apk add bash
 #RUN apk add --no-cache bash # for alpine 3+
 
@@ -29,7 +29,8 @@ RUN mv wait-for-it.sh /scripts
 
 # Make app folder
 RUN mkdir /app
-# Copy binary from build to main folder
+
+# Copy binary from build to app folder
 RUN cp main /app
 
 # Command to run when starting the container (called by wait-for-it.sh into app docker compose file)

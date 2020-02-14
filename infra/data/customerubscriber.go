@@ -6,24 +6,24 @@ import (
 )
 
 type customerSubscriber struct {
-	queueInfo
-	messageInfo
-	handler func(data []byte)
+	queueInfo   queueInfo
+	messageInfo messageInfo
+	handler     func(data []byte)
 }
 
-func (o customerSubscriber) QueueInfo() queueInfo {
+func (o *customerSubscriber) QueueInfo() queueInfo {
 	return o.queueInfo
 }
 
-func (o customerSubscriber) MessageInfo() messageInfo {
+func (o *customerSubscriber) MessageInfo() messageInfo {
 	return o.messageInfo
 }
 
-func (o customerSubscriber) MessageHandler() func([]byte) {
+func (o *customerSubscriber) MessageHandler() func([]byte) {
 	return o.handler
 }
 
-func newCustomerSub() *customerSubscriber {
+func NewCustomerSub() *customerSubscriber {
 	return &customerSubscriber{
 		queueInfo: queueInfo{
 			Name:         "q-customer",
@@ -41,8 +41,8 @@ func newCustomerSub() *customerSubscriber {
 		},
 		handler: func(data []byte) {
 			c, err := app.NewCustomerFromBytes(data)
-			if err == nil {
-				err = app.AddCustomer(&c, &customerDb{})
+			if err == nil { // TODO: realise how to do it without cycle dependency (data cannot depends on repo)
+				err = app.AddCustomer(&c, &customerRepository{})
 				if err != nil {
 					infra.LogError("error on create a customer", err)
 				} else {
