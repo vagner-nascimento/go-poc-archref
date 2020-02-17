@@ -2,20 +2,25 @@ package data
 
 import (
 	"errors"
+	"fmt"
+	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
 
-func NotImplementedError() error {
-	return errors.New("function not implemented")
+// TODO: pkg data - make methods that that logs the error and returns data specific errors
+func connectionError(err error, resource string) error {
+	errMsg := fmt.Sprintf("cannot connect into %s", resource)
+	infra.LogError(errMsg, err)
+
+	return errors.New(errMsg)
 }
 
-func ConnectionError(resource string) error {
-	return errors.New("cannot connect into " + resource)
+func execError(err error, operation string, dataResource string) error {
+	errMsg := fmt.Sprintf("cannot %s %s's data", operation, dataResource)
+	infra.LogError(errMsg, err)
+
+	return errors.New(errMsg)
 }
 
-func ExecError(operation string, entity string) error {
-	return errors.New("cannot " + operation + " " + entity + "'s data")
-}
-
-func Error(msg string) error {
+func simpleError(msg string) error {
 	return errors.New(msg)
 }

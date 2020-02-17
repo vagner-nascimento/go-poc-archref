@@ -32,6 +32,7 @@ var (
 	} // TODO: Mongo - realise how put connection into app config
 )
 
+// TODO: try make MongoDb struct visible only on data pkg
 type MongoDb struct {
 	collection *mongo.Collection
 }
@@ -40,8 +41,7 @@ func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.insertTimeout*time.Second)
 	_, err := o.collection.InsertOne(ctx, entity)
 	if err != nil {
-		infra.LogError("error on try to insert data into MongoDb", err)
-		return nil, ExecError("insert one", o.collection.Name())
+		return nil, execError(err, "customers.insertOne", "mongodb server")
 	}
 
 	return entity, nil
@@ -52,7 +52,7 @@ func NewMongoDb(collectionName string) (*MongoDb, error) {
 
 	err := mongoDbConnect()
 	if err != nil {
-		return db, err
+		return db, connectionError(err, "mongodb server")
 	}
 	return &MongoDb{
 		collection: singletonMongoClient.client.Database("golang").Collection(collectionName),
@@ -82,8 +82,7 @@ func mongoDbConnect() error {
 	})
 
 	if err != nil {
-		infra.LogError("error on try connect into mongo db", err)
-		return ConnectionError("database server")
+		return connectionError(err, "mongodb server")
 	}
 
 	return nil

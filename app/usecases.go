@@ -1,16 +1,18 @@
 package app
 
-import "errors"
-
-func createCustomer(c *Customer) *Customer {
+func setCustomerCreditCardHash(c *Customer) error {
 	c.setCreditCardHash()
 
-	return c
+	if c.CreditCardHash == "" {
+		return simpleError("cannot create customer's card hash")
+	}
+
+	return nil
 }
 
 func validateUser(u User) error {
 	if u.CustomerId == "" {
-		return errors.New("customer id not informed")
+		return simpleError("cannot create customer's card hash")
 	}
 
 	return nil

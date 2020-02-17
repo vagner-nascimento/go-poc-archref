@@ -100,7 +100,6 @@ func SubscribeConsumers(consumers []QueueConsumer) error {
 		handler, err := messageHandler(ch, c)
 
 		if err != nil {
-			infra.LogError(fmt.Sprintf("error on try subscribe %s consumer", c.QueueInfo().Name), err)
 			continue
 		}
 
@@ -120,7 +119,7 @@ func SubscribeConsumers(consumers []QueueConsumer) error {
 		<-keepListening
 	}
 
-	return Error("none queue can be listened")
+	return simpleError("none queue can be listened")
 }
 
 func messageHandler(ch *amqp.Channel, consumer QueueConsumer) (func(), error) {
@@ -133,7 +132,7 @@ func messageHandler(ch *amqp.Channel, consumer QueueConsumer) (func(), error) {
 		consumer.QueueInfo().Args, // Queue Table Args
 	)
 	if err != nil {
-		return nil, err
+		return nil, execError(err, "declare a channel", "amqp server")
 	}
 
 	msgs, err := ch.Consume(
@@ -146,7 +145,7 @@ func messageHandler(ch *amqp.Channel, consumer QueueConsumer) (func(), error) {
 		nil,
 	)
 	if err != nil {
-		return nil, err
+		return nil, execError(err, "consumes a queue", "amqp server")
 	}
 
 	handleMessage := consumer.MessageHandler()
@@ -182,6 +181,5 @@ func amqpConnect() (*amqp.Channel, error) {
 }
 
 func handleAmqConnectionError(err error) error {
-	infra.LogError("error on try to get amqp channel", err)
-	return ConnectionError("amqp server")
+	return connectionError(err, "amqp server")
 }

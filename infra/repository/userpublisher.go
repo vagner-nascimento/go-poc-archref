@@ -20,7 +20,7 @@ func (o userPubInfo) MessageInfo() data.MessageInfo {
 	return o.messageInfo
 }
 
-func NewUserPub(dataBytes []byte) userPubInfo {
+func newUserPub(dataBytes []byte) userPubInfo {
 	return userPubInfo{
 		queueInfo: data.QueueInfo{
 			Name:       "q-user",

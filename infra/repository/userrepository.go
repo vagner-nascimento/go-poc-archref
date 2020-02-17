@@ -11,18 +11,18 @@ type userRepository struct {
 
 func (o *userRepository) Save(u *app.User) error {
 	uBytes, _ := json.Marshal(u)
-	uPub := NewUserPub(uBytes)
+	uPub := newUserPub(uBytes)
 	return data.PublishMessage(uPub)
 }
 
 func (o *userRepository) Update(c *app.User) error {
-	return data.NotImplementedError()
+	return notImplementedError("user repository")
 }
 
 func (o *userRepository) Get(id string) (app.User, error) {
-	return app.User{}, data.NotImplementedError()
+	return app.User{}, notImplementedError("user repository")
 }
 
 func (o *userRepository) GetMany(params ...interface{}) ([]app.User, error) {
-	return []app.User{}, data.NotImplementedError()
+	return []app.User{}, notImplementedError("user repository")
 }

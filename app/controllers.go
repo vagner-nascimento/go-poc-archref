@@ -1,13 +1,19 @@
 package app
 
-func AddCustomer(c *Customer, data CustomerDataHandler) error {
-	return data.Save(createCustomer(c))
+func AddCustomer(c *Customer, repository CustomerDataHandler) error {
+	err := setCustomerCreditCardHash(c)
+	if err == nil {
+		err = repository.Save(c)
+	}
+
+	return err
 }
 
-func AddUser(u *User, data UserDataHandler) error {
+func AddUser(u *User, repository UserDataHandler) error {
 	err := validateUser(*u)
 	if err == nil {
-		return data.Save(u)
+		err = repository.Save(u)
 	}
+
 	return err
 }

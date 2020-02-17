@@ -31,12 +31,13 @@ type User struct {
 	EMail      string `eMail: "eMail"`
 }
 
+// TODO: make a factory to replace those new methods
 func NewCustomerFromBytes(data []byte) (Customer, error) {
 	var c Customer
 
 	err := json.Unmarshal(data, &c)
 	if err != nil {
-		return c, err
+		return c, operationError(err, "create a new customer form bytes")
 	}
 
 	return c, nil

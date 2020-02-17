@@ -30,13 +30,13 @@ func (o *customerRepository) Save(c *app.Customer) error {
 
 // TODO: implementation of Customer's repository
 func (o *customerRepository) Get(id string) (app.Customer, error) {
-	return app.Customer{}, data.NotImplementedError()
+	return app.Customer{}, notImplementedError("customer repository")
 }
 
 func (o *customerRepository) GetMany(params ...interface{}) ([]app.Customer, error) {
-	return []app.Customer{}, data.NotImplementedError()
+	return []app.Customer{}, notImplementedError("customer repository")
 }
 
 func (o *customerRepository) Update(c *app.Customer) error {
-	return data.NotImplementedError()
+	return notImplementedError("customer repository")
 }
