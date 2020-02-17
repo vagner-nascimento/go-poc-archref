@@ -1,27 +1,28 @@
-package data
+package repository
 
 import (
 	"github.com/streadway/amqp"
+	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
 // TODO make it a class that uses amqp
 type userPubInfo struct {
-	queueInfo   queueInfo
-	messageInfo messageInfo
+	queueInfo   data.QueueInfo
+	messageInfo data.MessageInfo
 	data        []byte
 }
 
-func (o userPubInfo) QueueInfo() queueInfo {
+func (o userPubInfo) QueueInfo() data.QueueInfo {
 	return o.queueInfo
 }
 
-func (o userPubInfo) MessageInfo() messageInfo {
+func (o userPubInfo) MessageInfo() data.MessageInfo {
 	return o.messageInfo
 }
 
-func NewUserPub(data []byte) userPubInfo {
+func NewUserPub(dataBytes []byte) userPubInfo {
 	return userPubInfo{
-		queueInfo: queueInfo{
+		queueInfo: data.QueueInfo{
 			Name:       "q-user",
 			Durable:    false,
 			AutoDelete: false,
@@ -29,13 +30,13 @@ func NewUserPub(data []byte) userPubInfo {
 			NoWait:     false,
 			Args:       nil,
 		},
-		messageInfo: messageInfo{
+		messageInfo: data.MessageInfo{
 			Exchange:  "",
 			Mandatory: false,
 			Immediate: false,
 			Publishing: amqp.Publishing{
 				ContentType: "application/json",
-				Body:        data,
+				Body:        dataBytes,
 			},
 			Args: nil,
 		},

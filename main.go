@@ -8,5 +8,9 @@ func main() {
 	// TODO: REST presenter interface
 	infra.LogInfo("application running")
 	infra.LogInfo("loading subscribers...")
-	loadSubscribers() // It MUST be always the last because it keeps listening to a channel to keep consumer connected
+	/*
+		loadSubscribers MUST be always the last to load because it blocks the app to keep listening to a channel
+		that keep consumers connected
+	*/
+	loadSubscribers()
 }

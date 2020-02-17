@@ -10,8 +10,6 @@ import (
 type customerRepository struct {
 }
 
-// TODO: make a package named repository and put repos into it (repo will depends on data)
-// TODO: Realise how to put collections Name into only one place
 const customerCollection = "customers"
 
 func (o *customerRepository) Save(c *app.Customer) error {

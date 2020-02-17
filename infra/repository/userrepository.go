@@ -11,7 +11,7 @@ type userRepository struct {
 
 func (o *userRepository) Save(u *app.User) error {
 	uBytes, _ := json.Marshal(u)
-	uPub := data.NewUserPub(uBytes)
+	uPub := NewUserPub(uBytes)
 	return data.PublishMessage(uPub)
 }
 

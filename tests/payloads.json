@@ -5,14 +5,14 @@
       "birthYear": 1768,
       "birthDay": 6,
       "birthMonth": 1,
-      "eMail": "gerald@mail.com"
+      "eMail": "gerald@witcher-mail.com"
     },
     {
       "name": "Yennefer",
       "birthYear": 1801,
       "birthDay": 23,
       "birthMonth": 10,
-      "eMail": "yennefer@mail.com"
+      "eMail": "yennefer@sorcerer-rmail.com"
     }
   ]
 }

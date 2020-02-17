@@ -15,3 +15,7 @@ func ConnectionError(resource string) error {
 func ExecError(operation string, entity string) error {
 	return errors.New("cannot " + operation + " " + entity + "'s data")
 }
+
+func Error(msg string) error {
+	return errors.New(msg)
+}

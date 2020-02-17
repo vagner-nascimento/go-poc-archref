@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/streadway/amqp"
@@ -10,7 +11,7 @@ import (
 )
 
 type (
-	queueInfo struct {
+	QueueInfo struct {
 		Name         string
 		Durable      bool
 		DeleteUnused bool
@@ -19,7 +20,7 @@ type (
 		NoWait       bool
 		Args         amqp.Table
 	}
-	messageInfo struct {
+	MessageInfo struct {
 		Consumer   string
 		AutoAct    bool
 		Exclusive  bool
@@ -31,14 +32,14 @@ type (
 		Publishing amqp.Publishing
 		Args       amqp.Table
 	}
-	queueConsumer interface {
-		QueueInfo() queueInfo
-		MessageInfo() messageInfo
+	QueueConsumer interface {
+		QueueInfo() QueueInfo
+		MessageInfo() MessageInfo
 		MessageHandler() func([]byte)
 	}
-	queuePublisher interface {
-		QueueInfo() queueInfo
-		MessageInfo() messageInfo
+	QueuePublisher interface {
+		QueueInfo() QueueInfo
+		MessageInfo() MessageInfo
 	}
 	amqpConfigTp struct {
 		once       sync.Once
@@ -59,7 +60,7 @@ var (
 	}
 )
 
-func PublishMessage(p queuePublisher) error {
+func PublishMessage(p QueuePublisher) error {
 	ch, err := amqpConnect()
 	if err != nil {
 		return handleAmqConnectionError(err)
@@ -83,38 +84,53 @@ func PublishMessage(p queuePublisher) error {
 	)
 
 	infra.LogInfo("message published into", p.QueueInfo().Name)
+
 	return nil
 }
 
-func SubscribeConsumers() error {
+func SubscribeConsumers(consumers []QueueConsumer) error {
 	ch, err := amqpConnect()
 	if err != nil {
 		return handleAmqConnectionError(err)
 	}
 
-	customerSub := NewCustomerSub()
-	customerReader, err := messageReader(ch, customerSub)
-	if err != nil {
-		return handleAmqConnectionError(err)
+	var qNames string
+	for i := 0; i < len(consumers); i = i + 1 {
+		c := consumers[i]
+		handler, err := messageHandler(ch, c)
+
+		if err != nil {
+			infra.LogError(fmt.Sprintf("error on try subscribe %s consumer", c.QueueInfo().Name), err)
+			continue
+		}
+
+		go handler()
+
+		if qNames == "" {
+			qNames = qNames + c.QueueInfo().Name
+		} else {
+			qNames = fmt.Sprintf("%s, %s", qNames, c.QueueInfo().Name)
+		}
 	}
 
-	go customerReader()
+	if qNames != "" {
+		infra.LogInfo("listening to the queues: " + qNames)
 
-	keepListening := make(chan bool)
-	infra.LogInfo("listening to the queues: " + customerSub.QueueInfo().Name)
-	<-keepListening
+		keepListening := make(chan bool)
+		<-keepListening
+	}
 
-	return nil
+	return Error("none queue can be listened")
 }
 
-func messageReader(ch *amqp.Channel, consumer queueConsumer) (func(), error) {
+func messageHandler(ch *amqp.Channel, consumer QueueConsumer) (func(), error) {
 	q, err := ch.QueueDeclare(
 		consumer.QueueInfo().Name,
 		consumer.QueueInfo().Durable,
 		consumer.QueueInfo().DeleteUnused,
 		consumer.QueueInfo().Exclusive,
 		consumer.QueueInfo().NoWait,
-		nil, // Queue Table Args
+		consumer.QueueInfo().Args, // Queue Table Args
 	)
 	if err != nil {
 		return nil, err
@@ -137,7 +153,7 @@ func messageReader(ch *amqp.Channel, consumer queueConsumer) (func(), error) {
 
 	return func() {
 		for msg := range msgs {
-			infra.LogInfo("message received", string(msg.Body))
+			infra.LogInfo("message received, body: ", string(msg.Body))
 			handleMessage(msg.Body)
 		}
 	}, nil

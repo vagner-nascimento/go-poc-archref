@@ -25,7 +25,7 @@ RUN go build -o main .
 
 # Move wait for scipt for root folder
 RUN mkdir /scripts
-RUN mv wait-for-it.sh /scripts
+RUN mv ./docker/wait-for-it.sh /scripts
 
 # Make app folder
 RUN mkdir /app
@@ -36,5 +36,6 @@ RUN cp main /app
 # Command to run when starting the container (called by wait-for-it.sh into app docker compose file)
 #ENTRYPOINT /app/main
 
-# Export necessary port
+# Export necessary port to rest connection
+# TODO: realise if really need expose port into docker file, maybe if only compose do it works fine, which will reduce maintenance
 EXPOSE 3000
