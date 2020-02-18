@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	// TODO: REST presenter interface
+	// TODO: REST presenter
 	infra.LogInfo("application running")
 	infra.LogInfo("loading subscribers")
 	/*

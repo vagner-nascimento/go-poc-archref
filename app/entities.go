@@ -31,8 +31,7 @@ type User struct {
 	EMail      string `eMail: "eMail"`
 }
 
-// TODO: make a factory to replace those new methods
-func NewCustomerFromBytes(data []byte) (Customer, error) {
+func BuildCustomerFromBytes(data []byte) (Customer, error) {
 	var c Customer
 
 	err := json.Unmarshal(data, &c)
@@ -43,11 +42,7 @@ func NewCustomerFromBytes(data []byte) (Customer, error) {
 	return c, nil
 }
 
-func NewUserFromCustomer(c Customer) User {
-	return mapCustomerIntoUser(c)
-}
-
-func mapCustomerIntoUser(c Customer) User {
+func BuildUserFromCustomer(c Customer) User {
 	return User{
 		CustomerId: c.Id,
 		Name:       c.Name,

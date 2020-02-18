@@ -6,7 +6,6 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
 
-// TODO: pkg data - make methods that that logs the error and returns data specific errors
 func connectionError(err error, resource string) error {
 	errMsg := fmt.Sprintf("cannot connect into %s", resource)
 	infra.LogError(errMsg, err)

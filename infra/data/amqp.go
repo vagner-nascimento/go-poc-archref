@@ -2,16 +2,15 @@ package data
 
 import (
 	"fmt"
-	"sync"
-
 	"github.com/streadway/amqp"
+	"sync"
 
 	"github.com/vagner-nascimento/go-poc-archref/environment"
 	"github.com/vagner-nascimento/go-poc-archref/infra"
 )
 
 type (
-	QueueInfo struct {
+	queueInfo struct {
 		Name         string
 		Durable      bool
 		DeleteUnused bool
@@ -20,26 +19,16 @@ type (
 		NoWait       bool
 		Args         amqp.Table
 	}
-	MessageInfo struct {
-		Consumer   string
-		AutoAct    bool
-		Exclusive  bool
-		Local      bool
-		NoWait     bool
-		Exchange   string
-		Mandatory  bool
-		Immediate  bool
-		Publishing amqp.Publishing
-		Args       amqp.Table
-	}
-	QueueConsumer interface {
-		QueueInfo() QueueInfo
-		MessageInfo() MessageInfo
-		MessageHandler() func([]byte)
-	}
-	QueuePublisher interface {
-		QueueInfo() QueueInfo
-		MessageInfo() MessageInfo
+	messageInfo struct {
+		Consumer  string
+		AutoAct   bool
+		Exclusive bool
+		Local     bool
+		NoWait    bool
+		Exchange  string
+		Mandatory bool
+		Immediate bool
+		Args      amqp.Table
 	}
 	amqpConfigTp struct {
 		once       sync.Once
@@ -49,55 +38,116 @@ type (
 )
 
 var (
-	// TODO: Amqp - realise how put it on app config
 	singletonAmqp struct {
 		amqoConn    *amqp.Connection
 		amqpChannel *amqp.Channel
 	}
+	// TODO: Amqp - realise how put connection infos it on app config
 	amqpConfig = amqpConfigTp{
 		localConn:  "amqp://guest:guest@localhost:5672",
 		dockerConn: "amqp://guest:guest@go-rabbit-mq:5672",
 	}
 )
 
-func PublishMessage(p QueuePublisher) error {
-	ch, err := amqpConnect()
+type AmqPublisher struct {
+	channel *amqp.Channel
+	queue   queueInfo
+	message messageInfo
+}
+
+func (o *AmqPublisher) Publish(data []byte) error {
+	q, err := o.channel.QueueDeclare(
+		o.queue.Name,
+		o.queue.Durable,
+		o.queue.AutoDelete,
+		o.queue.Exclusive,
+		o.queue.NoWait,
+		o.queue.Args,
+	)
+
 	if err != nil {
-		return handleAmqConnectionError(err)
+		return execError(err, "declare queue", "amqp server")
 	}
 
-	q, err := ch.QueueDeclare(
-		p.QueueInfo().Name,
-		p.QueueInfo().Durable,
-		p.QueueInfo().AutoDelete,
-		p.QueueInfo().Exclusive,
-		p.QueueInfo().NoWait,
-		p.QueueInfo().Args,
-	)
-
-	ch.Publish(
-		p.MessageInfo().Exchange,
+	err = o.channel.Publish(
+		o.message.Exchange,
 		q.Name,
-		p.MessageInfo().Mandatory,
-		p.MessageInfo().Immediate,
-		p.MessageInfo().Publishing,
+		o.message.Mandatory,
+		o.message.Immediate,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        data,
+		},
 	)
 
-	infra.LogInfo("message published into", p.QueueInfo().Name)
+	if err != nil {
+		return execError(err, "publish message", "amqp server")
+	}
 
 	return nil
 }
 
-func SubscribeConsumers(consumers []QueueConsumer) error {
+func NewAmqpPublisher(queueName string) (*AmqPublisher, error) {
 	ch, err := amqpConnect()
 	if err != nil {
-		return handleAmqConnectionError(err)
+		return nil, connectionError(err, "amqp server")
+	}
+
+	return &AmqPublisher{
+		channel: ch,
+		queue: queueInfo{
+			Name:       queueName,
+			Durable:    false,
+			AutoDelete: false,
+			Exclusive:  false,
+			NoWait:     false,
+			Args:       nil,
+		},
+		message: messageInfo{
+			Exchange:  "",
+			Mandatory: false,
+			Immediate: false,
+			Args:      nil,
+		},
+	}, nil
+}
+
+type AmqSubscriber struct {
+	queue   queueInfo
+	message messageInfo
+	handler func([]byte)
+}
+
+func NewAmqpSubscriber(queueName string, consumerName string, handler func([]byte)) AmqSubscriber {
+	return AmqSubscriber{
+		queue: queueInfo{
+			Name:         queueName,
+			Durable:      false,
+			DeleteUnused: false,
+			Exclusive:    false,
+			NoWait:       false,
+		},
+		message: messageInfo{
+			Consumer:  consumerName,
+			AutoAct:   true,
+			Exclusive: false,
+			Local:     false,
+			NoWait:    false,
+		},
+		handler: handler,
+	}
+}
+
+func SubscribeConsumers(subscribers []AmqSubscriber) error {
+	ch, err := amqpConnect()
+	if err != nil {
+		return connectionError(err, "amqp server")
 	}
 
 	var qNames string
-	for i := 0; i < len(consumers); i = i + 1 {
-		c := consumers[i]
-		handler, err := messageHandler(ch, c)
+	for i := 0; i < len(subscribers); i = i + 1 {
+		c := subscribers[i]
+		handler, err := messageHandlers(ch, c)
 
 		if err != nil {
 			continue
@@ -106,9 +156,9 @@ func SubscribeConsumers(consumers []QueueConsumer) error {
 		go handler()
 
 		if qNames == "" {
-			qNames = qNames + c.QueueInfo().Name
+			qNames = qNames + c.queue.Name
 		} else {
-			qNames = fmt.Sprintf("%s, %s", qNames, c.QueueInfo().Name)
+			qNames = fmt.Sprintf("%s, %s", qNames, c.queue.Name)
 		}
 	}
 
@@ -122,14 +172,14 @@ func SubscribeConsumers(consumers []QueueConsumer) error {
 	return simpleError("none queue can be listened")
 }
 
-func messageHandler(ch *amqp.Channel, consumer QueueConsumer) (func(), error) {
+func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
 	q, err := ch.QueueDeclare(
-		consumer.QueueInfo().Name,
-		consumer.QueueInfo().Durable,
-		consumer.QueueInfo().DeleteUnused,
-		consumer.QueueInfo().Exclusive,
-		consumer.QueueInfo().NoWait,
-		consumer.QueueInfo().Args, // Queue Table Args
+		sub.queue.Name,
+		sub.queue.Durable,
+		sub.queue.DeleteUnused,
+		sub.queue.Exclusive,
+		sub.queue.NoWait,
+		sub.queue.Args, // Queue Table Args
 	)
 	if err != nil {
 		return nil, execError(err, "declare a channel", "amqp server")
@@ -137,23 +187,21 @@ func messageHandler(ch *amqp.Channel, consumer QueueConsumer) (func(), error) {
 
 	msgs, err := ch.Consume(
 		q.Name,
-		consumer.MessageInfo().Consumer,
-		consumer.MessageInfo().AutoAct,
-		consumer.MessageInfo().Exclusive,
-		consumer.MessageInfo().Local,
-		consumer.MessageInfo().NoWait,
+		sub.message.Consumer,
+		sub.message.AutoAct,
+		sub.message.Exclusive,
+		sub.message.Local,
+		sub.message.NoWait,
 		nil,
 	)
 	if err != nil {
-		return nil, execError(err, "consumes a queue", "amqp server")
+		return nil, execError(err, "consume a queue", "amqp server")
 	}
-
-	handleMessage := consumer.MessageHandler()
 
 	return func() {
 		for msg := range msgs {
 			infra.LogInfo("message received, body: ", string(msg.Body))
-			handleMessage(msg.Body)
+			sub.handler(msg.Body)
 		}
 	}, nil
 }
@@ -178,8 +226,4 @@ func amqpConnect() (*amqp.Channel, error) {
 	})
 
 	return singletonAmqp.amqpChannel, err
-}
-
-func handleAmqConnectionError(err error) error {
-	return connectionError(err, "amqp server")
 }

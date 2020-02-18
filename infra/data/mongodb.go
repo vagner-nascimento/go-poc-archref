@@ -21,7 +21,7 @@ type mongoConfigTp struct {
 }
 
 var (
-	singletonMongoClient struct {
+	singletonMongo struct {
 		client *mongo.Client
 	}
 	mongoConfig = mongoConfigTp{
@@ -32,7 +32,6 @@ var (
 	} // TODO: Mongo - realise how put connection into app config
 )
 
-// TODO: try make MongoDb struct visible only on data pkg
 type MongoDb struct {
 	collection *mongo.Collection
 }
@@ -55,7 +54,7 @@ func NewMongoDb(collectionName string) (*MongoDb, error) {
 		return db, connectionError(err, "mongodb server")
 	}
 	return &MongoDb{
-		collection: singletonMongoClient.client.Database("golang").Collection(collectionName),
+		collection: singletonMongo.client.Database("golang").Collection(collectionName),
 	}, nil
 }
 
@@ -70,12 +69,12 @@ func mongoDbConnect() error {
 		}
 
 		ctx, _ := context.WithTimeout(context.Background(), mongoConfig.clientTimeout*time.Second)
-		singletonMongoClient.client, err = mongo.Connect(ctx, cliOpts)
+		singletonMongo.client, err = mongo.Connect(ctx, cliOpts)
 		if err != nil {
 			return
 		}
 
-		err = singletonMongoClient.client.Ping(context.TODO(), nil)
+		err = singletonMongo.client.Ping(context.TODO(), nil)
 		if err == nil {
 			infra.LogInfo("successfully connected into MongoDb server")
 		}

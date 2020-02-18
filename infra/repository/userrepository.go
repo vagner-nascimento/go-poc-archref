@@ -10,9 +10,22 @@ type userRepository struct {
 }
 
 func (o *userRepository) Save(u *app.User) error {
-	uBytes, _ := json.Marshal(u)
-	uPub := newUserPub(uBytes)
-	return data.PublishMessage(uPub)
+	uBytes, err := json.Marshal(u)
+	if err != nil {
+		return typeConversionError("user", "bytes array")
+	}
+
+	pub, err := data.NewAmqpPublisher("q-user")
+	if err != nil {
+		return operationError("save", "user")
+	}
+
+	err = pub.Publish(uBytes)
+	if err != nil {
+		return operationError("save", "user")
+	}
+
+	return nil
 }
 
 func (o *userRepository) Update(c *app.User) error {

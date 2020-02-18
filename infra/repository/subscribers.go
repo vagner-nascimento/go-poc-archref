@@ -3,11 +3,12 @@ package repository
 import "github.com/vagner-nascimento/go-poc-archref/infra/data"
 
 func SubscribeAllConsumers() error {
-	var consumers []data.QueueConsumer
+	var subs []data.AmqSubscriber
 
-	consumers = append(consumers, newCustomerSub())
-	err := data.SubscribeConsumers(consumers)
+	subs = append(subs, newCustomerSubscriber())
 	// TODO: append other consumers to test multiple queue readers
+
+	err := data.SubscribeConsumers(subs)
 
 	if err != nil {
 		return err
