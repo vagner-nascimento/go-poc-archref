@@ -10,8 +10,8 @@ func simpleError(msg string) error {
 	return errors.New(msg)
 }
 
-func operationError(err error, operation string) error {
-	msg := fmt.Sprintf("cannot %s", operation)
+func conversionError(err error, originType string, destinyType string) error {
+	msg := fmt.Sprintf("cannot convert %s into %s", originType, destinyType)
 	infra.LogError(msg, err)
 	return errors.New(msg)
 }

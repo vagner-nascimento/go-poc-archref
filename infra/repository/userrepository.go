@@ -12,7 +12,7 @@ type userRepository struct {
 func (o *userRepository) Save(u *app.User) error {
 	uBytes, err := json.Marshal(u)
 	if err != nil {
-		return typeConversionError("user", "bytes array")
+		return conversionError(err, "user", "bytes array")
 	}
 
 	pub, err := data.NewAmqpPublisher("q-user")

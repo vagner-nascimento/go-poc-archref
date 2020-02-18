@@ -14,13 +14,9 @@ func newCustomerSubscriber() data.AmqSubscriber {
 			if err != nil {
 				infra.LogError("error on create a customer", err)
 			} else {
-				infra.LogInfo("customer created")
-
 				u := app.BuildUserFromCustomer(c)
 				go app.AddUser(&u, &userRepository{})
 			}
-		} else {
-			infra.LogError("error on convert message's body into a Customer", err)
 		}
 	}
 
