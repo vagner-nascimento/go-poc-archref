@@ -10,7 +10,7 @@ func newCustomerSubscriber() data.AmqSubscriber {
 	consumerMessageHandler := func(data []byte) {
 		c, err := app.BuildCustomerFromBytes(data)
 		if err == nil {
-			err = app.AddCustomer(&c, &customerRepository{})
+			err = app.AddCustomer(&c, &CustomerRepository{})
 			if err != nil {
 				infra.LogError("error on create a customer", err)
 			} else {

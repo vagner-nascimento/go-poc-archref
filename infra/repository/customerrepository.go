@@ -7,12 +7,12 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
-type customerRepository struct {
+type CustomerRepository struct {
 }
 
 const customerCollection = "customers"
 
-func (o *customerRepository) Save(c *app.Customer) error {
+func (o *CustomerRepository) Save(c *app.Customer) error {
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
 		return err
@@ -28,15 +28,15 @@ func (o *customerRepository) Save(c *app.Customer) error {
 	return nil
 }
 
-// TODO: implementation of Customer's repository
-func (o *customerRepository) Get(id string) (app.Customer, error) {
+// TODO: implements all Customer's repository methods
+func (o *CustomerRepository) Get(id string) (app.Customer, error) {
 	return app.Customer{}, notImplementedError("customer repository")
 }
 
-func (o *customerRepository) GetMany(params ...interface{}) ([]app.Customer, error) {
+func (o *CustomerRepository) GetMany(params ...interface{}) ([]app.Customer, error) {
 	return []app.Customer{}, notImplementedError("customer repository")
 }
 
-func (o *customerRepository) Update(c *app.Customer) error {
+func (o *CustomerRepository) Update(c *app.Customer) error {
 	return notImplementedError("customer repository")
 }

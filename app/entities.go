@@ -36,7 +36,7 @@ func BuildCustomerFromBytes(data []byte) (Customer, error) {
 
 	err := json.Unmarshal(data, &c)
 	if err != nil {
-		return c, conversionError(err, "create a new customer form bytes")
+		return c, conversionError(err, "bytes", "customer")
 	}
 
 	return c, nil

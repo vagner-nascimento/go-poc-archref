@@ -5,7 +5,8 @@ import (
 )
 
 func main() {
-	// TODO: REST presenter
+	loadHttpPresenter()
+	infra.LogInfo("http presentation loaded")
 	infra.LogInfo("application running")
 	infra.LogInfo("loading subscribers")
 	/*
