@@ -7,11 +7,4 @@ POC to define an architecture reference in Golang
 
 #usage
 - POST -> *http://localhost:3000/api/v1/customers*
-body
-  {
-   "name": "Gerald",
-    "birthYear": 1768,
-    "birthDay": 6,
-    "birthMonth": 1,
-    "eMail": "gerald@witcher-mail.com"
-  }
+  body: take one item of customers array found into tests folder
