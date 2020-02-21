@@ -5,8 +5,8 @@ import (
 )
 
 func main() {
-	loadHttpPresenter()
-	infra.LogInfo("http presentation loaded")
+	infra.LogInfo("loading http presentation")
+	loadHttpPresentation()
 	infra.LogInfo("application running")
 	infra.LogInfo("loading subscribers")
 	/*

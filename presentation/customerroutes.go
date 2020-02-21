@@ -1,4 +1,4 @@
-package presenter
+package presentation
 
 import (
 	"encoding/json"
@@ -26,7 +26,7 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 	if err := decoder.Decode(&c); err != nil {
 		render.JSON(w, r, err)
 	}
-	if err := app.AddCustomer(&c, &repository.CustomerRepository{}); err != nil {
+	if err := app.CreateCustomer(&c, &repository.CustomerRepository{}); err != nil {
 		render.JSON(w, r, err)
 	} else {
 		render.JSON(w, r, c) // TODO: realise why it send cardHash (should not send)

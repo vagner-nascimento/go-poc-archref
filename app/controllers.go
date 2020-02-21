@@ -1,6 +1,6 @@
 package app
 
-func AddCustomer(c *Customer, repository CustomerDataHandler) error {
+func CreateCustomer(c *Customer, repository CustomerDataHandler) error {
 	err := setCustomerCreditCardHash(c)
 	if err == nil {
 		err = repository.Save(c)
@@ -9,11 +9,10 @@ func AddCustomer(c *Customer, repository CustomerDataHandler) error {
 	return err
 }
 
-func AddUser(u *User, repository UserDataHandler) error {
-	err := validateUser(*u)
-	if err == nil {
-		err = repository.Save(u)
+func UpdateCustomer(c *Customer, repository CustomerDataHandler) error {
+	if err := repository.Update(c); err != nil {
+		return simpleError("cannot update the customer")
 	}
 
-	return err
+	return nil
 }

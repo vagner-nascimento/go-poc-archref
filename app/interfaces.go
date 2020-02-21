@@ -6,10 +6,3 @@ type CustomerDataHandler interface {
 	Get(id string) (Customer, error)
 	GetMany(params ...interface{}) ([]Customer, error)
 }
-
-type UserDataHandler interface {
-	Save(u *User) error
-	Update(u *User) error
-	Get(id string) (User, error)
-	GetMany(params ...interface{}) ([]User, error)
-}

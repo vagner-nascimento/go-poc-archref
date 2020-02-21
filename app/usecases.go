@@ -9,11 +9,3 @@ func setCustomerCreditCardHash(c *Customer) error {
 
 	return nil
 }
-
-func validateUser(u User) error {
-	if u.CustomerId == "" {
-		return simpleError("cannot create customer's card hash")
-	}
-
-	return nil
-}

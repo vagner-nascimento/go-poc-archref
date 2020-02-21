@@ -24,13 +24,6 @@ func (c *Customer) setCreditCardHash() {
 	}
 }
 
-type User struct {
-	CustomerId string `customerId: "customerId"`
-	Name       string `name: "name"`
-	UserName   string `userName: "userName"`
-	EMail      string `eMail: "eMail"`
-}
-
 func BuildCustomerFromBytes(data []byte) (Customer, error) {
 	var c Customer
 
@@ -40,13 +33,4 @@ func BuildCustomerFromBytes(data []byte) (Customer, error) {
 	}
 
 	return c, nil
-}
-
-func BuildUserFromCustomer(c Customer) User {
-	return User{
-		CustomerId: c.Id,
-		Name:       c.Name,
-		UserName:   strings.Split(c.Name, " ")[0],
-		EMail:      c.EMail,
-	}
 }

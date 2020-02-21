@@ -6,19 +6,18 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
-func newCustomerSubscriber() data.AmqSubscriber {
+const userQueue = "q-user"
+const userConsumer = "poc-golang"
+
+func newUserSubscriber() data.AmqSubscriber {
 	consumerMessageHandler := func(data []byte) {
-		c, err := app.BuildCustomerFromBytes(data)
+		c, err := app.BuildCustomerFromBytes(data) // TODO: Create a user model and convert into a customer
 		if err == nil {
-			err = app.AddCustomer(&c, &CustomerRepository{})
+			err = app.UpdateCustomer(&c, &CustomerRepository{})
 			if err != nil {
 				infra.LogError("error on create a customer", err)
-			} else {
-				u := app.BuildUserFromCustomer(c)
-				go app.AddUser(&u, &userRepository{})
 			}
 		}
 	}
-
-	return data.NewAmqpSubscriber("q-customer", "poc-goland", consumerMessageHandler)
+	return data.NewAmqpSubscriber(userQueue, userConsumer, consumerMessageHandler)
 }

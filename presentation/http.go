@@ -1,11 +1,13 @@
-package presenter
+package presentation
 
 import (
 	"github.com/go-chi/chi"
+	"log"
+	"net/http"
 )
 
 /*
-    TODO: Http presenter
+    TODO: Http presentation - list of tasks bellow
 	Requirements list:
 		From Node Project
 		- .use(methodOverride('X-HTTP-Method-Override'))
@@ -23,12 +25,22 @@ import (
 		- Http 2 support (ssl)
 */
 
-func HttpRoutes() *chi.Mux {
+func StartHttpServer() error {
 	router := chi.NewRouter()
-
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/customers", newCustomersRoutes()) // TODO call customers routes and try add mount other routers here
 	})
 
-	return router
+	if err := chi.Walk(router, walkThroughRoutes); err != nil {
+		return simpleError(err, "error on make http routes")
+	}
+
+	go http.ListenAndServe(":3000", router)
+
+	return nil
+}
+
+func walkThroughRoutes(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+	log.Printf("%s %s\n", method, route)
+	return nil
 }

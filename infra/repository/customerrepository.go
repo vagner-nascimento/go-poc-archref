@@ -25,6 +25,7 @@ func (o *CustomerRepository) Save(c *app.Customer) error {
 		return err
 	}
 
+	go publishCustomer(*c)
 	return nil
 }
 

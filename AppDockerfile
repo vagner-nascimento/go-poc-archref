@@ -38,4 +38,4 @@ RUN cp main /app
 
 # Export necessary port to rest connection
 # TODO: realise if really need expose port into docker file, maybe if only compose do it works fine, which will reduce maintenance
-EXPOSE 3000
+#EXPOSE 3000
