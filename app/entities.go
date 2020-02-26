@@ -34,42 +34,40 @@ func setCreditCardHash(c *Customer) {
 	}
 }
 
-func BuildUserFromBytes(data []byte) (User, error) {
+func MakeUserFromBytes(data []byte) (User, error) {
 	var u User
-
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, conversionError(err, "bytes", "user")
+		return u, conversionError("bytes", "user")
 	}
 
 	return u, nil
 }
 
-func buildCustomer(data interface{}) (Customer, error) {
-	return Customer{}, simpleError(fmt.Sprintf("invalid data type %s to build a customer", "T"))
-	//switch t := data.(type) {
-	//case User: // TODO: finish the customer conversion to update it
-	//	//return buildCustomerFromUser(data)
-	//case []byte:
-	////	buildCustomerFromBytes(data)
-	//default:
-	//	return Customer{}, simpleError(fmt.Sprintf("invalid data type %s to build a customer", t))
-	//}
+func makeCustomer(data interface{}) (Customer, error) {
+	switch t := data.(type) {
+	case User:
+		return buildCustomerFromUser(data.(User)), nil
+	case *User:
+		return buildCustomerFromUser(*data.(*User)), nil
+	case []byte:
+		return buildCustomerFromBytes(data.([]byte))
+	case Customer:
+		return data.(Customer), nil
+	default:
+		return Customer{}, simpleError(fmt.Sprintf("invalid data type %s to build a customer", t))
+	}
 }
 
 func buildCustomerFromBytes(bytes []byte) (Customer, error) {
 	var c Customer
 	if err := json.Unmarshal(bytes, &c); err != nil {
-		return c, err
+		return c, conversionError("bytes", "customer")
 	}
 
 	return c, nil
 }
 
-func buildCustomerFromUser(u User) (Customer, error) {
-	if err := validateUser(u); err != nil {
-		return Customer{}, err
-	}
-
+func buildCustomerFromUser(u User) Customer {
 	return Customer{
 		Id:             "",
 		Name:           u.Name,
@@ -79,13 +77,5 @@ func buildCustomerFromUser(u User) (Customer, error) {
 		BirthDay:       u.BirthDay,
 		BirthMonth:     u.BirthYear,
 		UserId:         u.Id,
-	}, nil
-}
-
-func validateUser(u User) error {
-	if u.Id == "" {
-		return requiredDataError("user", "id")
 	}
-
-	return nil
 }
