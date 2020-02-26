@@ -26,10 +26,11 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 	if err := decoder.Decode(&c); err != nil {
 		render.JSON(w, r, err)
 	}
+
 	if err := app.CreateCustomer(&c, &repository.CustomerRepository{}); err != nil {
-		render.JSON(w, r, err)
+		render.JSON(w, r, err) // TODO: realise how to send an safe error into response
 	} else {
-		render.JSON(w, r, c) // TODO: realise why it send cardHash (should not send)
+		render.JSON(w, r, c) // TODO: realise why it send cardHash (shouldn't send)
 	}
 }
 

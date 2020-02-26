@@ -9,10 +9,10 @@ func CreateCustomer(c *Customer, repository CustomerDataHandler) error {
 	return err
 }
 
-func UpdateCustomer(c *Customer, repository CustomerDataHandler) error {
-	if err := repository.Update(c); err != nil {
-		return simpleError("cannot update the customer")
+func UpdateCustomer(data interface{}, repository CustomerDataHandler) (*Customer, error) {
+	c, err := getCustomer(data)
+	if err != nil {
+		return &c, err
 	}
-
-	return nil
+	return &c, nil
 }

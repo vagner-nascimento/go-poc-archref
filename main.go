@@ -7,11 +7,7 @@ import (
 func main() {
 	infra.LogInfo("loading http presentation")
 	loadHttpPresentation()
-	infra.LogInfo("application running")
+	infra.LogInfo("application is running")
 	infra.LogInfo("loading subscribers")
-	/*
-		loadSubscribers MUST be always the last to load because it blocks the app to keep listening to a channel
-		that keep consumers connected
-	*/
-	loadSubscribers()
+	loadSubscribers() // <- subscribers MUST be always the last loaded because it blocks the app to keep listening to the amq channels
 }

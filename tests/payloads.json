@@ -14,5 +14,15 @@
       "birthMonth": 10,
       "eMail": "yennefer@sorcerer-rmail.com"
     }
+  ],
+  "users": [
+    {
+      "userId": "",
+      "name": "Gerald",
+      "eMail": "gerald@witcher-mail.com",
+      "birthYear": 1801,
+      "birthDay": 23,
+      "birthMonth": 10
+    }
   ]
 }

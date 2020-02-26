@@ -1,8 +1,10 @@
 package presentation
 
 import (
+	"fmt"
 	"github.com/go-chi/chi"
-	"log"
+	"github.com/vagner-nascimento/go-poc-archref/environment"
+	"github.com/vagner-nascimento/go-poc-archref/infra"
 	"net/http"
 )
 
@@ -35,12 +37,11 @@ func StartHttpServer() error {
 		return simpleError(err, "error on make http routes")
 	}
 
-	go http.ListenAndServe(":3000", router)
-
+	go http.ListenAndServe(environment.GetHttpPort(":"), router)
 	return nil
 }
 
 func walkThroughRoutes(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-	log.Printf("%s %s\n", method, route)
+	infra.LogInfo(fmt.Sprintf("%s %s", method, route))
 	return nil
 }

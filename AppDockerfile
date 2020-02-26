@@ -2,9 +2,8 @@ FROM golang:alpine
 
 # Install bash to use at compose commands
 RUN apk update && apk add bash
-#RUN apk add --no-cache bash # for alpine 3+
 
-# Set necessary environmet variables needed for our image
+# Set necessary environment variables needed for our image
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
     GOOS=linux \
@@ -33,9 +32,5 @@ RUN mkdir /app
 # Copy binary from build to app folder
 RUN cp main /app
 
-# Command to run when starting the container (called by wait-for-it.sh into app docker compose file)
-#ENTRYPOINT /app/main
-
-# Export necessary port to rest connection
-# TODO: realise if really need expose port into docker file, maybe if only compose do it works fine, which will reduce maintenance
-#EXPOSE 3000
+# Remove all files on /build
+RUN rm -rf /build

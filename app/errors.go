@@ -15,3 +15,7 @@ func conversionError(err error, originType string, destinyType string) error {
 	infra.LogError(msg, err)
 	return errors.New(msg)
 }
+
+func requiredDataError(entity string, data string) error {
+	return errors.New(fmt.Sprintf("%s.%s is required"))
+}

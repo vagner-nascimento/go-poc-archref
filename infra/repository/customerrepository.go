@@ -20,8 +20,7 @@ func (o *CustomerRepository) Save(c *app.Customer) error {
 
 	c.Id = uuid.New().String()
 
-	_, err = db.Insert(c)
-	if err != nil {
+	if _, err = db.Insert(c); err != nil {
 		return err
 	}
 

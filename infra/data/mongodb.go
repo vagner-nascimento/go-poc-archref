@@ -38,8 +38,7 @@ type MongoDb struct {
 
 func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.insertTimeout*time.Second)
-	_, err := o.collection.InsertOne(ctx, entity)
-	if err != nil {
+	if _, err := o.collection.InsertOne(ctx, entity); err != nil {
 		return nil, execError(err, "customers.insertOne", "mongodb server")
 	}
 
@@ -47,12 +46,10 @@ func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 }
 
 func NewMongoDb(collectionName string) (*MongoDb, error) {
-	var db *MongoDb
-
-	err := mongoDbConnect()
-	if err != nil {
-		return db, connectionError(err, "mongodb server")
+	if err := mongoDbConnect(); err != nil {
+		return nil, connectionError(err, "mongodb server")
 	}
+
 	return &MongoDb{
 		collection: singletonMongo.client.Database("golang").Collection(collectionName),
 	}, nil
@@ -74,8 +71,7 @@ func mongoDbConnect() error {
 			return
 		}
 
-		err = singletonMongo.client.Ping(context.TODO(), nil)
-		if err == nil {
+		if err = singletonMongo.client.Ping(context.TODO(), nil); err == nil {
 			infra.LogInfo("successfully connected into MongoDb server")
 		}
 	})
@@ -87,7 +83,7 @@ func mongoDbConnect() error {
 	return nil
 }
 
-// TODO: Realise how to set mongo db indexes
+// TODO: Realise how to set mongo db indexes and make customers email unique
 // func SetMongoDbIndexes() error {
 // 	return nil
 // }

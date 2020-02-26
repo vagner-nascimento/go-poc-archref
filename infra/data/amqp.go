@@ -148,7 +148,6 @@ func SubscribeConsumers(subscribers []AmqSubscriber) error {
 	for i := 0; i < len(subscribers); i = i + 1 {
 		c := subscribers[i]
 		handler, err := messageHandlers(ch, c)
-
 		if err != nil {
 			continue
 		}
