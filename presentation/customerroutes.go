@@ -1,7 +1,7 @@
 package presentation
 
 import (
-	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -20,14 +20,12 @@ func newCustomersRoutes() *chi.Mux {
 }
 
 func postCustomer(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-
-	var c app.Customer
-	if err := decoder.Decode(&c); err != nil {
-		render.JSON(w, r, err)
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		render.JSON(w, r, castError(err, "io.Reader", "bytes")) // TODO: improve httpErrors
 	}
 
-	if err := app.CreateCustomer(&c, &repository.CustomerRepository{}); err != nil {
+	if c, err := app.CreateCustomer(bytes, &repository.CustomerRepository{}); err != nil {
 		render.JSON(w, r, err) // TODO: realise how to send an safe error into response
 	} else {
 		render.JSON(w, r, c) // TODO: realise why it send cardHash (shouldn't send)

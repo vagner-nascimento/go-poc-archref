@@ -9,8 +9,8 @@ func setCustomerCreditCardHash(c *Customer) error {
 	return nil
 }
 
-func getCustomer(data interface{}) (Customer, error) {
-	c, err := makeCustomer(data)
+func getCustomer(data []byte) (Customer, error) {
+	c, err := makeCustomerFromBytes(data)
 	if err != nil {
 		return Customer{}, err
 	}
@@ -18,16 +18,25 @@ func getCustomer(data interface{}) (Customer, error) {
 	return c, nil
 }
 
-func validateUpdateData(c Customer) error {
+func getUser(data []byte) (user, error) {
+	u, err := makeUserFromBytes(data)
+	if err != nil {
+		return user{}, err
+	}
+
+	return u, nil
+}
+
+func validateUser(u user) error {
 	var msgs []string
-	if c.Id == "" && c.UserId == "" {
-		msgs = append(msgs, "neither id nor user id are informed")
+	if u.Id == "" {
+		msgs = append(msgs, "user id is required")
 	}
-	if c.Name == "" {
-		msgs = append(msgs, "name is not informed")
+	if u.Name == "" {
+		msgs = append(msgs, "user name is required")
 	}
-	if c.EMail == "" {
-		msgs = append(msgs, "email is not informed")
+	if u.EMail == "" {
+		msgs = append(msgs, "user email is required")
 	}
 
 	if len(msgs) > 0 {
@@ -35,4 +44,8 @@ func validateUpdateData(c Customer) error {
 	}
 
 	return nil
+}
+
+func mergeUserToCustomer(u user, c Customer) Customer {
+	return mapUserToCustomer(u, c)
 }

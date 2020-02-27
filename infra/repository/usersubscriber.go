@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"github.com/vagner-nascimento/go-poc-archref/app"
+	"github.com/vagner-nascimento/go-poc-archref/infra"
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
@@ -11,12 +13,9 @@ const (
 
 func newUserSubscriber() data.AmqSubscriber {
 	messageHandler := func(data []byte) {
-		//u, err := app.MakeUserFromBytes(data) // TODO: messageHandler not done yet
-		//if err == nil {
-		//	if _, err = app.UpdateCustomer(u, &CustomerRepository{}); err != nil {
-		//		infra.LogError("error on update a customer", err)
-		//	}
-		//}
+		if _, err := app.UpdateCustomerFromUser(data, &CustomerRepository{}); err != nil {
+			infra.LogError("error on update a customer", err)
+		}
 	}
 
 	return data.NewAmqpSubscriber(userQueue, userConsumer, messageHandler)

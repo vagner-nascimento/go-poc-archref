@@ -17,12 +17,20 @@
   ],
   "users": [
     {
-      "userId": "",
+      "userId": "1a331ac8-9249-48e3-b57f-30f8445c0311",
       "name": "Gerald",
       "eMail": "gerald@witcher-mail.com",
       "birthYear": 1801,
       "birthDay": 23,
       "birthMonth": 10
+    },
+    {
+      "userId": "fb65ae9d-2e80-4917-b8aa-cfcc47c61b22",
+      "name": "Yennefer",
+      "birthYear": 1801,
+      "birthDay": 23,
+      "birthMonth": 10,
+      "eMail": "yennefer@sorcerer-rmail.com"
     }
   ]
 }

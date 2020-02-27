@@ -28,15 +28,16 @@ func (o *CustomerRepository) Save(c *app.Customer) error {
 	return nil
 }
 
-// TODO: implements all Customer's repository methods
 func (o *CustomerRepository) Get(id string) (app.Customer, error) {
 	return app.Customer{}, notImplementedError("customer repository")
 }
 
+// TODO: implement GetMany
 func (o *CustomerRepository) GetMany(params ...interface{}) ([]app.Customer, error) {
 	return []app.Customer{}, notImplementedError("customer repository")
 }
 
+// TODO: implement Update
 func (o *CustomerRepository) Update(c *app.Customer) error {
 	return notImplementedError("customer repository")
 }

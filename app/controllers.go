@@ -2,48 +2,45 @@ package app
 
 import "fmt"
 
-func CreateCustomer(c *Customer, repository CustomerDataHandler) error {
-	err := setCustomerCreditCardHash(c)
+func CreateCustomer(data []byte, repository CustomerDataHandler) (interface{}, error) {
+	c, err := getCustomer(data)
 	if err == nil {
-		err = repository.Save(c)
+		if err = setCustomerCreditCardHash(&c); err == nil {
+			err = repository.Save(&c)
+		}
 	}
 
-	return err
+	return c, err
 }
 
-func UpdateCustomer(data interface{}, repository CustomerDataHandler) (Customer, error) {
-	c, err := getCustomer(data)
+func UpdateCustomerFromUser(data []byte, repository CustomerDataHandler) (Customer, error) {
+	u, err := getUser(data)
 	if err != nil {
 		return Customer{}, err
 	}
 
-	if err = validateUpdateData(c); err != nil {
+	if err = validateUser(u); err != nil {
+		return Customer{}, err
+	}
+
+	customers, err := repository.GetMany(fmt.Sprintf("eMail: %s", u.EMail))
+	if err != nil {
 		return Customer{}, err
 	}
 
 	var foundCustomer Customer
-	if c.Id != "" {
-		foundCustomer, err = repository.Get(c.Id)
-
-		if err != nil {
-			return Customer{}, err
-		}
-	} else {
-		customers, err := repository.GetMany(fmt.Sprintf("userId: %s", c.UserId))
-		if err != nil {
-			return Customer{}, err
-		}
-
-		if len(customers) > 0 {
-			foundCustomer = customers[0]
-		}
+	if len(customers) > 0 {
+		foundCustomer = customers[0]
 	}
 
 	if foundCustomer.Id == "" {
 		return Customer{}, notFoundError("customer")
 	}
 
-	//TODO: Make merge of data and update it
+	newCustomer := mergeUserToCustomer(u, foundCustomer)
+	if err = repository.Update(&newCustomer); err != nil {
+		return Customer{}, err
+	}
 
-	return c, nil
+	return newCustomer, nil
 }
