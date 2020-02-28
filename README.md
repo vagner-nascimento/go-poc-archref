@@ -7,9 +7,17 @@ POC to define an architecture reference in Golang
 - Optionally, you can add **-d** to free your terminal: docker-compose -f **docker/compose-app.yml** up --build -d
 
 # usage
-- POST -> *http://localhost:3000/api/v1/customers*
-  body: take one item of customers array found into tests folder
-  
+- POST: *http://localhost:3000/api/v1/customers*
+ - body (json):  
+{  
+ "name": "Gerald",  
+ "birthYear": 1768,  
+ "birthDay": 6,  
+ "birthMonth": 1,  
+ "eMail": "gerald@witcher-mail.com"  
+}
+ - other payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
+
 # next steps
 - Build others http resources
 
