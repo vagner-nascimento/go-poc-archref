@@ -50,13 +50,17 @@ var (
 )
 
 type AmqPublisher struct {
-	channel *amqp.Channel
 	queue   queueInfo
 	message messageInfo
 }
 
 func (o *AmqPublisher) Publish(data []byte) error {
-	q, err := o.channel.QueueDeclare(
+	ch, err := amqpConnect()
+	if err != nil {
+		return connectionError(err, "amqp server")
+	}
+
+	q, err := ch.QueueDeclare(
 		o.queue.Name,
 		o.queue.Durable,
 		o.queue.AutoDelete,
@@ -69,7 +73,7 @@ func (o *AmqPublisher) Publish(data []byte) error {
 		return execError(err, "declare queue", "amqp server")
 	}
 
-	err = o.channel.Publish(
+	err = ch.Publish(
 		o.message.Exchange,
 		q.Name,
 		o.message.Mandatory,
@@ -88,13 +92,7 @@ func (o *AmqPublisher) Publish(data []byte) error {
 }
 
 func NewAmqpPublisher(queueName string) (*AmqPublisher, error) {
-	ch, err := amqpConnect()
-	if err != nil {
-		return nil, connectionError(err, "amqp server")
-	}
-
 	return &AmqPublisher{
-		channel: ch,
 		queue: queueInfo{
 			Name:       queueName,
 			Durable:    false,

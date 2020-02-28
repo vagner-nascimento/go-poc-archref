@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"sync"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 type mongoConfigTp struct {
 	clientTimeout time.Duration
 	insertTimeout time.Duration
+	findTimeout   time.Duration
 	localConn     string
 	dockerConn    string
 	once          sync.Once
@@ -27,6 +29,7 @@ var (
 	mongoConfig = mongoConfigTp{
 		clientTimeout: 15,
 		insertTimeout: 5,
+		findTimeout:   8,
 		localConn:     "mongodb://admin:admin@localhost:27017",
 		dockerConn:    "mongodb://admin:admin@go-mongodb:27017",
 	} // TODO: Mongo - realise how put connection into app config
@@ -37,12 +40,49 @@ type MongoDb struct {
 }
 
 func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
+
 	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.insertTimeout*time.Second)
 	if _, err := o.collection.InsertOne(ctx, entity); err != nil {
-		return nil, execError(err, "customers.insertOne", "mongodb server")
+		return nil, execError(err, "insertOne", "mongodb server")
 	}
 
 	return entity, nil
+}
+
+func (o *MongoDb) Find(filters bson.D, limit int64) ([]interface{}, error) {
+	if limit <= 0 {
+		limit = 1
+	}
+
+	options := options.Find()
+	options.SetLimit(limit)
+
+	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
+	cur, err := o.collection.Find(ctx, filters, options)
+	if err != nil {
+		return nil, execError(err, "find", "mongodb server")
+	}
+
+	// TODO: Realise how to send the result
+	var results []interface{}
+	for cur.Next(ctx) {
+		var r interface{}
+
+		err := cur.Decode(&r)
+		if err != nil {
+			return nil, execError(err, "find", "mongodb server")
+		}
+
+		results = append(results, r)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, execError(err, "find", "mongodb server")
+	}
+
+	cur.Close(ctx)
+
+	return results, nil
 }
 
 func NewMongoDb(collectionName string) (*MongoDb, error) {

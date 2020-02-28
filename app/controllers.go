@@ -1,6 +1,8 @@
 package app
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func CreateCustomer(data []byte, repository CustomerDataHandler) (interface{}, error) {
 	c, err := getCustomer(data)
@@ -23,7 +25,12 @@ func UpdateCustomerFromUser(data []byte, repository CustomerDataHandler) (Custom
 		return Customer{}, err
 	}
 
-	customers, err := repository.GetMany(fmt.Sprintf("eMail: %s", u.EMail))
+	customers, err := repository.GetMany([]SearchParameter{{
+		Field:    "email",
+		Operator: "=",
+		Value:    u.EMail,
+	}})
+
 	if err != nil {
 		return Customer{}, err
 	}
@@ -37,10 +44,13 @@ func UpdateCustomerFromUser(data []byte, repository CustomerDataHandler) (Custom
 		return Customer{}, notFoundError("customer")
 	}
 
+	fmt.Println("HERE foundCustomer", foundCustomer)
+
 	newCustomer := mergeUserToCustomer(u, foundCustomer)
-	if err = repository.Update(&newCustomer); err != nil {
-		return Customer{}, err
-	}
+
+	//if err = repository.Update(&newCustomer); err != nil {
+	//	return Customer{}, err
+	//}
 
 	return newCustomer, nil
 }

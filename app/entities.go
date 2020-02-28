@@ -18,6 +18,12 @@ type Customer struct {
 	UserId         string
 }
 
+type SearchParameter struct {
+	Field    string
+	Operator string
+	Value    string
+}
+
 type user struct {
 	Id         string `id: "id"`
 	Name       string `name: "name"`
