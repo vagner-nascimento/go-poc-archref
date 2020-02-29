@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"reflect"
 	"sync"
 	"time"
 
@@ -49,7 +50,7 @@ func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 	return entity, nil
 }
 
-func (o *MongoDb) Find(filters bson.D, limit int64) ([]interface{}, error) {
+func (o *MongoDb) Find(filters bson.D, limit int64, resultType reflect.Type) ([]interface{}, error) {
 	if limit <= 0 {
 		limit = 1
 	}
@@ -66,14 +67,14 @@ func (o *MongoDb) Find(filters bson.D, limit int64) ([]interface{}, error) {
 	// TODO: Realise how to send the result
 	var results []interface{}
 	for cur.Next(ctx) {
-		var r interface{}
+		item := reflect.New(resultType).Interface()
 
-		err := cur.Decode(&r)
+		err := cur.Decode(&item)
 		if err != nil {
 			return nil, execError(err, "find", "mongodb server")
 		}
 
-		results = append(results, r)
+		results = append(results, item)
 	}
 
 	if err := cur.Err(); err != nil {
@@ -81,7 +82,6 @@ func (o *MongoDb) Find(filters bson.D, limit int64) ([]interface{}, error) {
 	}
 
 	cur.Close(ctx)
-
 	return results, nil
 }
 

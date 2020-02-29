@@ -1,11 +1,13 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/vagner-nascimento/go-poc-archref/app"
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 	"go.mongodb.org/mongo-driver/bson"
+	"reflect"
 )
 
 type CustomerRepository struct {
@@ -58,20 +60,20 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter) ([]app.Custom
 		return nil, err
 	}
 
-	results, err := db.Find(filters, 100)
+	res, err := db.Find(filters, 100, reflect.TypeOf(app.Customer{}))
 	if err != nil {
 		return nil, err
 	}
 
 	var customers []app.Customer
-	for r := range results {
-		//var c app.Customer
-		//if err := json.Unmarshal(r, &c); err != nil {
-		//	infra.LogError("error on find customer", err)
-		//	return nil, err
-		//}
-		fmt.Println(r)
-		//customers = append(customers, c)
+	for _, item := range res {
+		c, ok := item.(app.Customer) // TODO: Realise how to convert to Customer
+		if !ok {
+			fmt.Println("error on convert customer")
+			return nil, errors.New("error on convert customer")
+		}
+
+		customers = append(customers, c)
 	}
 
 	return customers, nil
