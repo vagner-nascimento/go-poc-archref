@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
-	"reflect"
 	"sync"
 	"time"
 
@@ -50,39 +49,50 @@ func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 	return entity, nil
 }
 
-func (o *MongoDb) Find(filters bson.D, limit int64, resultType reflect.Type) ([]interface{}, error) {
-	if limit <= 0 {
-		limit = 1
+func (o *MongoDb) FindOne(filters bson.D) ([]byte, error) {
+	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
+
+	raw, err := o.collection.FindOne(ctx, filters).DecodeBytes()
+	if err != nil { // TODO: handle when not found, it returns an error
+		return nil, execError(err, "find one", "mongodb server")
 	}
 
-	options := options.Find()
-	options.SetLimit(limit)
+	result, err := bson.Marshal(raw)
+	if err != nil {
+		return nil, execError(err, "find one", "mongodb server")
+	}
+
+	return result, nil
+}
+
+func (o *MongoDb) Find(filters bson.D, limit int64, results chan interface{}) {
+	if limit <= 0 {
+		close(results)
+		return
+	}
 
 	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
-	cur, err := o.collection.Find(ctx, filters, options)
+	cur, err := o.collection.Find(ctx, filters, options.Find().SetLimit(limit))
 	if err != nil {
-		return nil, execError(err, "find", "mongodb server")
+		results <- execError(err, "find", "mongodb server")
+		close(results)
+		return
 	}
 
-	// TODO: Realise how to send the result
-	var results []interface{}
 	for cur.Next(ctx) {
-		item := reflect.New(resultType).Interface()
-
-		err := cur.Decode(&item)
+		item, err := bson.Marshal(cur.Current)
 		if err != nil {
-			return nil, execError(err, "find", "mongodb server")
+			results <- execError(err, "find", "mongodb server")
+			break
 		}
-
-		results = append(results, item)
+		results <- item
 	}
 
-	if err := cur.Err(); err != nil {
-		return nil, execError(err, "find", "mongodb server")
+	if err := cur.Err(); err == nil {
+		cur.Close(ctx)
 	}
 
-	cur.Close(ctx)
-	return results, nil
+	close(results)
 }
 
 func NewMongoDb(collectionName string) (*MongoDb, error) {

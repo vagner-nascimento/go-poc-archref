@@ -1,13 +1,10 @@
 package repository
 
 import (
-	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/vagner-nascimento/go-poc-archref/app"
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 	"go.mongodb.org/mongo-driver/bson"
-	"reflect"
 )
 
 type CustomerRepository struct {
@@ -21,8 +18,8 @@ func (o *CustomerRepository) Save(c *app.Customer) error {
 		return err
 	}
 
+	// TODO: realise how to insert with JSON names declared on app entity
 	c.Id = uuid.New().String()
-
 	if _, err = db.Insert(c); err != nil {
 		return err
 	}
@@ -32,10 +29,25 @@ func (o *CustomerRepository) Save(c *app.Customer) error {
 }
 
 func (o *CustomerRepository) Get(id string) (app.Customer, error) {
-	return app.Customer{}, notImplementedError("customer repository")
+	var customer app.Customer
+	db, err := data.NewMongoDb(customerCollection)
+	if err != nil {
+		return customer, err
+	}
+
+	result, err := db.FindOne(bson.D{{"id", id}})
+	if err != nil {
+		return customer, err
+	}
+
+	customer, err = unmarshalCustomer(result)
+	if err != nil {
+		return customer, err
+	}
+
+	return customer, nil
 }
 
-// TODO: implement GetMany
 func (o *CustomerRepository) GetMany(params []app.SearchParameter) ([]app.Customer, error) {
 	var filters bson.D
 
@@ -46,13 +58,12 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter) ([]app.Custom
 	case 1:
 		filters = bson.D{{params[0].Field, params[0].Value}}
 	default:
-		{
-			var ds []bson.D
-			for _, param := range params {
-				ds = append(ds, bson.D{{param.Field, param.Value}})
-			}
-			filters = bson.D{{"$and", bson.A{ds}}}
+		var ds []bson.D
+		for _, param := range params {
+			ds = append(ds, bson.D{{param.Field, param.Value}})
 		}
+		filters = bson.D{{"$and", bson.A{ds}}}
+
 	}
 
 	db, err := data.NewMongoDb(customerCollection)
@@ -60,26 +71,35 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter) ([]app.Custom
 		return nil, err
 	}
 
-	res, err := db.Find(filters, 100, reflect.TypeOf(app.Customer{}))
-	if err != nil {
-		return nil, err
-	}
+	results := make(chan interface{})
+	go db.Find(filters, 100, results)
 
 	var customers []app.Customer
-	for _, item := range res {
-		c, ok := item.(app.Customer) // TODO: Realise how to convert to Customer
-		if !ok {
-			fmt.Println("error on convert customer")
-			return nil, errors.New("error on convert customer")
+	for result := range results {
+		switch val := result.(type) {
+		case []byte:
+			customer, err := unmarshalCustomer(val)
+			if err != nil {
+				return nil, err
+			}
+			customers = append(customers, customer)
+		case error:
+			return nil, val // TODO: handle errors
 		}
-
-		customers = append(customers, c)
 	}
-
 	return customers, nil
 }
 
 // TODO: implement Update
 func (o *CustomerRepository) Update(c *app.Customer) error {
 	return notImplementedError("customer repository")
+}
+
+func unmarshalCustomer(data []byte) (app.Customer, error) {
+	var customer app.Customer
+	err := bson.Unmarshal(data, &customer)
+	if err != nil {
+		return customer, err
+	}
+	return customer, nil
 }

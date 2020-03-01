@@ -2,7 +2,6 @@ package repository
 
 import (
 	"encoding/json"
-	"github.com/vagner-nascimento/go-poc-archref/infra"
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
 )
 
@@ -24,6 +23,5 @@ func publishCustomer(c interface{}) error {
 		return operationError("publish", "customer")
 	}
 
-	infra.LogInfo("customer published")
 	return nil
 }

@@ -8,7 +8,7 @@ POC to define an architecture reference in Golang
 
 # usage
 - POST: *http://localhost:3000/api/v1/customers*
- - body (json):  
+    - body (json):  
 {  
  "name": "Gerald",  
  "birthYear": 1768,  
@@ -16,7 +16,9 @@ POC to define an architecture reference in Golang
  "birthMonth": 1,  
  "eMail": "gerald@witcher-mail.com"  
 }
- - other payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
+    - other payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
+ 
+ - GET: *http://localhost:3000/api/v1/customers/{id}*
 
 # next steps
 - Build others http resources

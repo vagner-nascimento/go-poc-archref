@@ -25,16 +25,17 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, castError(err, "io.Reader", "bytes")) // TODO: improve httpErrors
 	}
 
-	if c, err := app.CreateCustomer(bytes, &repository.CustomerRepository{}); err != nil {
+	if customer, err := app.CreateCustomer(bytes, &repository.CustomerRepository{}); err != nil {
 		render.JSON(w, r, err) // TODO: realise how to send an safe error into response
 	} else {
-		render.JSON(w, r, c) // TODO: realise why it send cardHash (shouldn't send)
+		render.JSON(w, r, customer) // TODO: realise why it send cardHash (shouldn't send)
 	}
 }
 
 func getCustomer(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	c := app.Customer{Id: id, Name: "Test Get"}
-
-	render.JSON(w, r, c)
+	if customer, err := app.FindCustomer(chi.URLParam(r, "id"), &repository.CustomerRepository{}); err != nil {
+		render.JSON(w, r, err)
+	} else {
+		render.JSON(w, r, customer)
+	}
 }

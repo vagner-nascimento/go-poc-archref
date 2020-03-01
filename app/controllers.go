@@ -1,9 +1,5 @@
 package app
 
-import (
-	"fmt"
-)
-
 func CreateCustomer(data []byte, repository CustomerDataHandler) (interface{}, error) {
 	c, err := getCustomer(data)
 	if err == nil {
@@ -44,13 +40,16 @@ func UpdateCustomerFromUser(data []byte, repository CustomerDataHandler) (Custom
 		return Customer{}, notFoundError("customer")
 	}
 
-	fmt.Println("HERE foundCustomer", foundCustomer)
-
 	newCustomer := mergeUserToCustomer(u, foundCustomer)
 
+	// TODO: finish update
 	//if err = repository.Update(&newCustomer); err != nil {
 	//	return Customer{}, err
 	//}
 
 	return newCustomer, nil
+}
+
+func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
+	return repository.Get(id)
 }
