@@ -49,3 +49,7 @@ func validateUser(u user) error {
 func mergeUserToCustomer(u user, c Customer) Customer {
 	return mapUserToCustomer(u, c)
 }
+
+func mergeCustomerUpdate(oldCustomer Customer, newCustomer Customer) Customer {
+	return makeCustomerToUpdate(oldCustomer, newCustomer)
+}

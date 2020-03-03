@@ -4,15 +4,34 @@ import (
 	"reflect"
 )
 
-func CreateCustomer(customerData []byte, repository CustomerDataHandler) (interface{}, error) {
-	c, err := getCustomer(customerData)
+func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Customer, error) {
+	customer, err := getCustomer(customerData)
 	if err == nil {
-		if err = setCustomerCreditCardHash(&c); err == nil {
-			err = repository.Save(&c)
+		if err = setCustomerCreditCardHash(&customer); err == nil {
+			err = repository.Save(&customer)
 		}
 	}
 
-	return c, err
+	return customer, err
+}
+
+func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (Customer, error) {
+	foundCustomer, err := repository.Get(id)
+	if len(foundCustomer.Id) <= 0 {
+		return Customer{}, notFoundError(reflect.TypeOf(Customer{}))
+	}
+
+	customer, err := getCustomer(customerData)
+	if err != nil {
+		return Customer{}, err
+	}
+
+	newCustomer := mergeCustomerUpdate(foundCustomer, customer)
+	if err := repository.Replace(newCustomer); err != nil {
+		return Customer{}, err
+	}
+
+	return newCustomer, nil
 }
 
 func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Customer, error) {

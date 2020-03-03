@@ -19,6 +19,16 @@ POC to define an architecture reference in Golang
     - other customer's payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
  
  - **HTTP/GET**: *http://localhost:3000/api/v1/customers/{id}*
+ - **HTTP/PUT**: *http://localhost:3000/api/v1/customers/{id}*
+    - body (json):  
+      {  
+       "name": "Gerald",  
+       "birthYear": 1768,  
+       "birthDay": 6,  
+       "birthMonth": 1,  
+       "eMail": "gerald@witcher-mail.com",  
+"userId": "026616e2-063a-408b-aa45-99dc671081db"  
+}
  
  - **AMQP/UPDATE**:
     - insert a customer through **HTTP/POST** method 
@@ -32,7 +42,7 @@ POC to define an architecture reference in Golang
     - on **Get messages** menu increase **Messages** field to 50 (or more) and click on **Get Message(s)**
 
 # next steps
-- Build others http resources
+- Build get list by query params and patch
 
 # utils
 - Docker installation: https://docs.docker.com/install/

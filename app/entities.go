@@ -69,6 +69,19 @@ func mapUserToCustomer(u user, c Customer) Customer {
 	}
 }
 
+func makeCustomerToUpdate(oldCustomer Customer, newCustomer Customer) Customer {
+	return Customer{
+		Id:             oldCustomer.Id,
+		Name:           newCustomer.Name,
+		EMail:          newCustomer.EMail,
+		CreditCardHash: oldCustomer.CreditCardHash,
+		BirthYear:      newCustomer.BirthYear,
+		BirthDay:       newCustomer.BirthDay,
+		BirthMonth:     newCustomer.BirthMonth,
+		UserId:         newCustomer.UserId,
+	}
+}
+
 func setCreditCardHash(c *Customer) {
 	c.CreditCardHash = "fake_"
 	for i := 0; i < 5; i = i + 1 {
