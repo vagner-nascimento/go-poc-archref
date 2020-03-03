@@ -11,7 +11,6 @@ const (
 	userConsumer = "poc-golang"
 )
 
-//TODO realise why it is closing after do operation
 func newUserSubscriber() data.AmqSubscriber {
 	messageHandler := func(data []byte) {
 		if _, err := app.UpdateCustomerFromUser(data, &CustomerRepository{}); err != nil {

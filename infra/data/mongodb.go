@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"strings"
 	"sync"
 	"time"
 
@@ -51,9 +52,11 @@ func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 
 func (o *MongoDb) FindOne(filters bson.D) ([]byte, error) {
 	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
-
 	raw, err := o.collection.FindOne(ctx, filters).DecodeBytes()
-	if err != nil { // TODO: handle when not found, it returns an error
+	if err != nil {
+		if strings.Contains(err.Error(), "no documents in result") {
+			return nil, nil
+		}
 		return nil, execError(err, "find one", "mongodb server")
 	}
 
@@ -61,7 +64,6 @@ func (o *MongoDb) FindOne(filters bson.D) ([]byte, error) {
 	if err != nil {
 		return nil, execError(err, "find one", "mongodb server")
 	}
-
 	return result, nil
 }
 
@@ -93,6 +95,17 @@ func (o *MongoDb) Find(filters bson.D, limit int64, results chan interface{}) {
 	}
 
 	close(results)
+}
+
+func (o *MongoDb) ReplaceOne(filter bson.M, newData interface{}) (int64, error) {
+	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
+
+	res, err := o.collection.ReplaceOne(ctx, filter, newData)
+	if err != nil {
+		return 0, err
+	}
+
+	return res.ModifiedCount, nil
 }
 
 func NewMongoDb(collectionName string) (*MongoDb, error) {

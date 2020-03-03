@@ -30,7 +30,7 @@ import (
 func StartHttpServer() error {
 	router := chi.NewRouter()
 	router.Route("/api/v1", func(r chi.Router) {
-		r.Mount("/customers", newCustomersRoutes()) // TODO call customers routes and try add mount other routers here
+		r.Mount("/customers", newCustomersRoutes()) // TODO try add mount other routers here
 	})
 
 	if err := chi.Walk(router, walkThroughRoutes); err != nil {

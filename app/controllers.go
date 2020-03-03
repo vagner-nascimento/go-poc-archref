@@ -1,7 +1,11 @@
 package app
 
-func CreateCustomer(data []byte, repository CustomerDataHandler) (interface{}, error) {
-	c, err := getCustomer(data)
+import (
+	"reflect"
+)
+
+func CreateCustomer(customerData []byte, repository CustomerDataHandler) (interface{}, error) {
+	c, err := getCustomer(customerData)
 	if err == nil {
 		if err = setCustomerCreditCardHash(&c); err == nil {
 			err = repository.Save(&c)
@@ -11,22 +15,21 @@ func CreateCustomer(data []byte, repository CustomerDataHandler) (interface{}, e
 	return c, err
 }
 
-func UpdateCustomerFromUser(data []byte, repository CustomerDataHandler) (Customer, error) {
-	u, err := getUser(data)
+func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Customer, error) {
+	user, err := getUser(userData)
 	if err != nil {
 		return Customer{}, err
 	}
 
-	if err = validateUser(u); err != nil {
+	if err = validateUser(user); err != nil {
 		return Customer{}, err
 	}
 
 	customers, err := repository.GetMany([]SearchParameter{{
-		Field:    "email",
+		Field:    "EMail",
 		Operator: "=",
-		Value:    u.EMail,
+		Value:    user.EMail,
 	}})
-
 	if err != nil {
 		return Customer{}, err
 	}
@@ -37,19 +40,23 @@ func UpdateCustomerFromUser(data []byte, repository CustomerDataHandler) (Custom
 	}
 
 	if foundCustomer.Id == "" {
-		return Customer{}, notFoundError("customer")
+		return Customer{}, notFoundError(reflect.TypeOf(Customer{}))
 	}
 
-	newCustomer := mergeUserToCustomer(u, foundCustomer)
-
-	// TODO: finish update
-	//if err = repository.Update(&newCustomer); err != nil {
-	//	return Customer{}, err
-	//}
+	newCustomer := mergeUserToCustomer(user, foundCustomer)
+	if err = repository.Replace(newCustomer); err != nil {
+		return Customer{}, err
+	}
 
 	return newCustomer, nil
 }
 
 func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
-	return repository.Get(id)
+	if customer, err := repository.Get(id); err != nil {
+		return Customer{}, err
+	} else if len(customer.Id) <= 0 {
+		return Customer{}, notFoundError(reflect.TypeOf(Customer{}))
+	} else {
+		return customer, nil
+	}
 }

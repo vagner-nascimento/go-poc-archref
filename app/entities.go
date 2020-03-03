@@ -8,14 +8,14 @@ import (
 )
 
 type Customer struct {
-	Id             string `id: "id"`
-	Name           string `name: "name"`
-	EMail          string `eMail: "eMail"`
-	CreditCardHash string
-	BirthYear      int `birthYear: "birthYear"`
-	BirthDay       int `birthDay: "birthDay"`
-	BirthMonth     int `birthMont: "birthMonth"`
-	UserId         string
+	Id             string `json:"id" bson:"id"`
+	Name           string `json:"name" bson:"name"`
+	EMail          string `json:"eMail" bson:"eMail"`
+	CreditCardHash string `json:"-" bson:"creditCardHash"`
+	BirthYear      int    `json:"birthYear" bson:"birthYear"`
+	BirthDay       int    `json:"birthDay" bson:"birthDay"`
+	BirthMonth     int    `json:"birthMonth" bson:"birthMont"`
+	UserId         string `json:"userId" bson:"userId"`
 }
 
 type SearchParameter struct {
@@ -24,13 +24,18 @@ type SearchParameter struct {
 	Value    string
 }
 
+type UpdateParameter struct {
+	Field string
+	Value string
+}
+
 type user struct {
-	Id         string `id: "id"`
-	Name       string `name: "name"`
-	EMail      string `eMail: "eMail"`
-	BirthYear  int    `birthYear: "birthYear"`
-	BirthDay   int    `birthDay: "birthDay"`
-	BirthMonth int    `birthMont: "birthMonth"`
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	EMail      string `json:"eMail"`
+	BirthYear  int    `json:"birthYear"`
+	BirthDay   int    `json:"birthDay"`
+	BirthMonth int    `json:"birthMonth"`
 }
 
 func makeCustomerFromBytes(bytes []byte) (Customer, error) {

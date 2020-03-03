@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -19,6 +20,6 @@ func validationError(msgs []string) error {
 	return errors.New(strings.Join(msgs, ","))
 }
 
-func notFoundError(entity string) error {
-	return errors.New(fmt.Sprintf("%s not found", entity))
+func notFoundError(entityType reflect.Type) error {
+	return errors.New(fmt.Sprintf("%s not found", entityType.Name()))
 }

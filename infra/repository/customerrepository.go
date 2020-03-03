@@ -1,10 +1,15 @@
 package repository
 
 import (
+	"errors"
+	"fmt"
+	"reflect"
+
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/vagner-nascimento/go-poc-archref/app"
 	"github.com/vagner-nascimento/go-poc-archref/infra/data"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 type CustomerRepository struct {
@@ -12,19 +17,18 @@ type CustomerRepository struct {
 
 const customerCollection = "customers"
 
-func (o *CustomerRepository) Save(c *app.Customer) error {
+func (o *CustomerRepository) Save(customer *app.Customer) error {
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
 		return err
 	}
 
-	// TODO: realise how to insert with JSON names declared on app entity
-	c.Id = uuid.New().String()
-	if _, err = db.Insert(c); err != nil {
+	customer.Id = uuid.New().String()
+	if _, err = db.Insert(customer); err != nil {
 		return err
 	}
 
-	go publishCustomer(*c)
+	go publishCustomer(*customer)
 	return nil
 }
 
@@ -36,7 +40,7 @@ func (o *CustomerRepository) Get(id string) (app.Customer, error) {
 	}
 
 	result, err := db.FindOne(bson.D{{"id", id}})
-	if err != nil {
+	if err != nil || result == nil {
 		return customer, err
 	}
 
@@ -56,14 +60,34 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter) ([]app.Custom
 	case 0:
 		filters = bson.D{{}}
 	case 1:
-		filters = bson.D{{params[0].Field, params[0].Value}}
+		field, ok := reflect.TypeOf(&app.Customer{}).Elem().FieldByName(params[0].Field)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf("field %s not found on Customer", params[0].Field))
+		}
+
+		key := field.Tag.Get("bson")
+		if len(key) <= 0 {
+			return nil, errors.New(fmt.Sprintf("field %s has not bson tag into customer", params[0].Field))
+		}
+
+		filters = bson.D{{key, params[0].Value}}
 	default:
 		var ds []bson.D
 		for _, param := range params {
-			ds = append(ds, bson.D{{param.Field, param.Value}})
-		}
-		filters = bson.D{{"$and", bson.A{ds}}}
+			field, ok := reflect.TypeOf(app.Customer{}).Elem().FieldByName(param.Field)
+			if !ok {
+				return nil, errors.New(fmt.Sprintf("field %s not found on Customer", param.Field))
+			}
 
+			key := field.Tag.Get("bson")
+			if len(key) <= 0 {
+				return nil, errors.New(fmt.Sprintf("field %s has not bson tag into customer", param.Field))
+			}
+
+			ds = append(ds, bson.D{{key, param.Value}})
+		}
+
+		filters = bson.D{{"$and", bson.A{ds}}}
 	}
 
 	db, err := data.NewMongoDb(customerCollection)
@@ -90,8 +114,32 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter) ([]app.Custom
 	return customers, nil
 }
 
-// TODO: implement Update
-func (o *CustomerRepository) Update(c *app.Customer) error {
+func (o *CustomerRepository) UpdateMany(param app.SearchParameter, data []app.UpdateParameter) (int64, error) {
+	return 0, notImplementedError("customer repository")
+}
+
+func (o *CustomerRepository) Replace(customer app.Customer) error {
+	db, err := data.NewMongoDb(customerCollection)
+	if err != nil {
+		return err
+	}
+
+	replaceCount, err := db.ReplaceOne(bson.M{"id": customer.Id}, customer)
+	if err != nil {
+		return err
+	}
+
+	if replaceCount < 1 {
+		return errors.New("none Customer was replace")
+	}
+
+	go publishCustomer(customer)
+
+	return nil
+}
+
+func (o *CustomerRepository) Update(id string, data []app.UpdateParameter) error {
+
 	return notImplementedError("customer repository")
 }
 

@@ -7,7 +7,7 @@ POC to define an architecture reference in Golang
 - Optionally, you can add **-d** to free your terminal: docker-compose -f **docker/compose-app.yml** up --build -d
 
 # usage
-- POST: *http://localhost:3000/api/v1/customers*
+- **HTTP/POST**: *http://localhost:3000/api/v1/customers*
     - body (json):  
 {  
  "name": "Gerald",  
@@ -16,9 +16,20 @@ POC to define an architecture reference in Golang
  "birthMonth": 1,  
  "eMail": "gerald@witcher-mail.com"  
 }
-    - other payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
+    - other customer's payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
  
- - GET: *http://localhost:3000/api/v1/customers/{id}*
+ - **HTTP/GET**: *http://localhost:3000/api/v1/customers/{id}*
+ 
+ - **AMQP/UPDATE**:
+    - insert a customer through **HTTP/POST** method 
+    - access *http://localhost:15672/#/queues/%2F/q-user*
+    - on  **Publish message** menu, put a user that have the same e-mail address of inserted customer into **Payload** field
+    - click on **Publish message**
+    - to verify changes, call **HTTP/GET** with inserted customer's id
+    
+ - **AMQP/GET**: operations that change customer's data are published into customer's queue.
+    - access **http://localhost:15672/#/queues/%2F/q-customer**
+    - on **Get messages** menu increase **Messages** field to 50 (or more) and click on **Get Message(s)**
 
 # next steps
 - Build others http resources
