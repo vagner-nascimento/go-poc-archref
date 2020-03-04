@@ -114,10 +114,6 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter) ([]app.Custom
 	return customers, nil
 }
 
-func (o *CustomerRepository) UpdateMany(param app.SearchParameter, data []app.UpdateParameter) (int64, error) {
-	return 0, notImplementedError("customer repository")
-}
-
 func (o *CustomerRepository) Replace(customer app.Customer) error {
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
@@ -130,17 +126,12 @@ func (o *CustomerRepository) Replace(customer app.Customer) error {
 	}
 
 	if replaceCount < 1 {
-		return errors.New("none Customer was replace")
+		return errors.New("none Customer was replaced")
 	}
 
 	go publishCustomer(customer)
 
 	return nil
-}
-
-func (o *CustomerRepository) Update(id string, data []app.UpdateParameter) error {
-
-	return notImplementedError("customer repository")
 }
 
 func unmarshalCustomer(data []byte) (app.Customer, error) {

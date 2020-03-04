@@ -5,10 +5,18 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 )
 
-func simpleError(msg string) error {
-	return errors.New(msg)
+var customerType reflect.Type
+var once = sync.Once{}
+
+func getCustomerType() reflect.Type {
+	once.Do(func() {
+		customerType = reflect.TypeOf(Customer{})
+	})
+
+	return customerType
 }
 
 func conversionError(originType string, destinyType string) error {
@@ -20,6 +28,6 @@ func validationError(msgs []string) error {
 	return errors.New(strings.Join(msgs, ","))
 }
 
-func notFoundError(entityType reflect.Type) error {
-	return errors.New(fmt.Sprintf("%s not found", entityType.Name()))
+func customerNotFoundError() error {
+	return errors.New(fmt.Sprintf("%s not found", getCustomerType().Name()))
 }

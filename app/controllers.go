@@ -1,14 +1,10 @@
 package app
 
-import (
-	"reflect"
-)
-
 func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Customer, error) {
 	customer, err := getCustomer(customerData)
 	if err == nil {
-		if err = setCustomerCreditCardHash(&customer); err == nil {
-			err = repository.Save(&customer)
+		if err = repository.Save(&customer); err != nil {
+			customer = Customer{}
 		}
 	}
 
@@ -18,7 +14,7 @@ func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Custom
 func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (Customer, error) {
 	foundCustomer, err := repository.Get(id)
 	if len(foundCustomer.Id) <= 0 {
-		return Customer{}, notFoundError(reflect.TypeOf(Customer{}))
+		return Customer{}, customerNotFoundError()
 	}
 
 	customer, err := getCustomer(customerData)
@@ -45,9 +41,8 @@ func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Cu
 	}
 
 	customers, err := repository.GetMany([]SearchParameter{{
-		Field:    "EMail",
-		Operator: "=",
-		Value:    user.EMail,
+		Field: "EMail",
+		Value: user.EMail,
 	}})
 	if err != nil {
 		return Customer{}, err
@@ -59,7 +54,7 @@ func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Cu
 	}
 
 	if foundCustomer.Id == "" {
-		return Customer{}, notFoundError(reflect.TypeOf(Customer{}))
+		return Customer{}, customerNotFoundError()
 	}
 
 	newCustomer := mergeUserToCustomer(user, foundCustomer)
@@ -74,7 +69,7 @@ func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
 	if customer, err := repository.Get(id); err != nil {
 		return Customer{}, err
 	} else if len(customer.Id) <= 0 {
-		return Customer{}, notFoundError(reflect.TypeOf(Customer{}))
+		return Customer{}, customerNotFoundError()
 	} else {
 		return customer, nil
 	}
