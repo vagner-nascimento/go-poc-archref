@@ -1,5 +1,11 @@
 package app
 
+// TODO: review return without var names
+/*
+	search in project by
+	return
+}
+*/
 func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Customer, error) {
 	customer, err := getCustomer(customerData)
 	if err == nil {
@@ -11,23 +17,24 @@ func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Custom
 	return customer, err
 }
 
-func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (Customer, error) {
-	foundCustomer, err := repository.Get(id)
-	if len(foundCustomer.Id) <= 0 {
-		return Customer{}, customerNotFoundError()
-	}
-
-	customer, err := getCustomer(customerData)
+func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (newCustomer Customer, err error) {
+	var foundCustomer Customer
+	foundCustomer, err = repository.Get(id)
 	if err != nil {
-		return Customer{}, err
+		return
 	}
 
-	newCustomer := mergeCustomerUpdate(foundCustomer, customer)
-	if err := repository.Replace(newCustomer); err != nil {
-		return Customer{}, err
+	newCustomer, err = getCustomerToUpdate(foundCustomer, customerData)
+	if err != nil {
+		return
 	}
 
-	return newCustomer, nil
+	if err = repository.Replace(newCustomer); err != nil {
+		newCustomer = Customer{}
+		return
+	}
+
+	return newCustomer, err
 }
 
 func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Customer, error) {
@@ -40,24 +47,21 @@ func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Cu
 		return Customer{}, err
 	}
 
-	customers, err := repository.GetMany([]SearchParameter{{
+	// TODO: think in a better way to send params to the repo
+	customers, total, err := repository.GetMany([]SearchParameter{{
 		Field: "EMail",
 		Value: user.EMail,
-	}})
-	if err != nil {
-		return Customer{}, err
-	}
+	}},
+		0,
+		2)
 
-	var foundCustomer Customer
-	if len(customers) > 0 {
-		foundCustomer = customers[0]
-	}
-
-	if foundCustomer.Id == "" {
+	if total > 1 {
+		return Customer{}, validationError([]string{"to many register with the same e-mail"})
+	} else if total == 0 {
 		return Customer{}, customerNotFoundError()
 	}
 
-	newCustomer := mergeUserToCustomer(user, foundCustomer)
+	newCustomer := mergeUserToCustomer(user, customers[0])
 	if err = repository.Replace(newCustomer); err != nil {
 		return Customer{}, err
 	}
@@ -73,4 +77,8 @@ func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
 	} else {
 		return customer, nil
 	}
+}
+
+func FindCustomers(params []SearchParameter, page int64, quantity int64, repository CustomerDataHandler) (res []Customer, total int64, err error) {
+	return repository.GetMany(params, page, quantity)
 }

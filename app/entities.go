@@ -58,7 +58,7 @@ func mapUserToCustomer(u user, c Customer) Customer {
 	}
 }
 
-func makeCustomerToUpdate(oldCustomer Customer, newCustomer Customer) Customer {
+func mapCustomerToUpdate(oldCustomer Customer, newCustomer Customer) Customer {
 	return Customer{
 		Id:         oldCustomer.Id,
 		Name:       newCustomer.Name,

@@ -9,6 +9,21 @@ func getCustomer(data []byte) (Customer, error) {
 	return c, nil
 }
 
+func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
+	if len(oldCustomer.Id) <= 0 {
+		err = customerNotFoundError()
+		return
+	}
+
+	newData, err := makeCustomerFromBytes(data)
+	if err != nil {
+		return
+	}
+
+	newCustomer = mapCustomerToUpdate(oldCustomer, newData)
+	return newCustomer, err
+}
+
 func getUser(data []byte) (user, error) {
 	u, err := makeUserFromBytes(data)
 	if err != nil {
@@ -23,9 +38,11 @@ func validateUser(u user) error {
 	if u.Id == "" {
 		msgs = append(msgs, "user id is required")
 	}
+
 	if u.Name == "" {
 		msgs = append(msgs, "user name is required")
 	}
+
 	if u.EMail == "" {
 		msgs = append(msgs, "user email is required")
 	}
@@ -39,8 +56,4 @@ func validateUser(u user) error {
 
 func mergeUserToCustomer(u user, c Customer) Customer {
 	return mapUserToCustomer(u, c)
-}
-
-func mergeCustomerUpdate(oldCustomer Customer, newCustomer Customer) Customer {
-	return makeCustomerToUpdate(oldCustomer, newCustomer)
 }

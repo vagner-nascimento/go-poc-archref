@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"strings"
 	"sync"
@@ -67,26 +68,41 @@ func (o *MongoDb) FindOne(filters bson.D) ([]byte, error) {
 	return result, nil
 }
 
-func (o *MongoDb) Find(filters bson.D, limit int64, results chan interface{}) {
-	if limit <= 0 {
+func (o *MongoDb) Find(filters bson.D, maxDocs int64, page int64, results chan interface{}, total *int64) {
+	if maxDocs <= 0 || page < 0 {
+		results <- simpleError(fmt.Sprintf("invalid parameters, maxDocs: %s, page: %s", maxDocs, page))
 		close(results)
 		return
 	}
 
+	shouldExit := func(err error) (exit bool) {
+		if err != nil {
+			results <- err
+			close(results)
+			return true
+		}
+		return false
+	}
+
+	var err error
 	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
-	cur, err := o.collection.Find(ctx, filters, options.Find().SetLimit(limit))
-	if err != nil {
-		results <- execError(err, "find", "mongodb server")
-		close(results)
+	*total, err = o.collection.CountDocuments(ctx, filters)
+	if shouldExit(err) {
+		return
+	}
+
+	opts := options.Find().SetLimit(maxDocs).SetSkip(maxDocs * page)
+	cur, err := o.collection.Find(ctx, filters, opts)
+	if shouldExit(err) {
 		return
 	}
 
 	for cur.Next(ctx) {
 		item, err := bson.Marshal(cur.Current)
-		if err != nil {
-			results <- execError(err, "find", "mongodb server")
+		if shouldExit(err) {
 			break
 		}
+
 		results <- item
 	}
 
