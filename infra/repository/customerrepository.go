@@ -2,8 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
@@ -53,20 +51,18 @@ func (o *CustomerRepository) Get(id string) (app.Customer, error) {
 }
 
 func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, quantity int64) (customers []app.Customer, total int64, err error) {
-	var filters bson.D
-	filters, err = getBsonFilters(params)
-	if err != nil {
-		return
-	}
-
 	var db *data.MongoDb
 	db, err = data.NewMongoDb(customerCollection)
 	if err != nil {
-		return
+		return nil, 0, err
 	}
 
+	bsonFilters := getBsonFilters(params)
 	results := make(chan interface{}, 50)
-	go db.Find(filters, quantity, page, results, &total)
+	if page > 0 {
+		page = page - 1
+	}
+	go db.Find(bsonFilters, quantity, page, results, &total)
 
 	for result := range results {
 		switch val := result.(type) {
@@ -74,11 +70,11 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, q
 			var customer app.Customer
 			customer, err = unmarshalCustomer(val)
 			if err != nil {
-				return
+				return nil, 0, err
 			}
 			customers = append(customers, customer)
 		case error:
-			return // TODO: handle errors
+			return nil, 0, err // TODO: handle errors
 		}
 	}
 
@@ -105,47 +101,53 @@ func (o *CustomerRepository) Replace(customer app.Customer) error {
 	return nil
 }
 
-func getBsonFilters(params []app.SearchParameter) (filters bson.D, err error) {
-paramsSwitch:
+// TODO: realise how to convert number values into its type to work on mongo
+func getBsonFilters(params []app.SearchParameter) bson.D {
+	convertValue := func(val interface{}) (res interface{}) {
+		res = val
+		switch val.(type) { // IT AWAYS COMES STRING
+		case int, int64, int8, int32:
+			res = val.(int64)
+		case float32, float64:
+			res, _ = val.(float64)
+		}
+
+		return res
+	}
+	convertValues := func(vals []interface{}) (res []interface{}) {
+		for _, val := range vals {
+			res = append(res, convertValue(val))
+		}
+		return res
+	}
+
+	getBsonD := func(param app.SearchParameter) bson.D {
+		bsonD := bson.D{{}}
+		if len(param.Values) > 0 {
+			if len(param.Values) == 1 {
+				bsonD = bson.D{{param.Field, convertValue(param.Values[0])}}
+			} else {
+				bsonD = bson.D{{param.Field, bson.M{"$in": convertValues(param.Values)}}}
+			}
+		}
+		return bsonD
+	}
+
+	var filters bson.D
 	switch len(params) {
 	case 0:
 		filters = bson.D{{}}
-	case 1: // TODO: when came from QUERY PARAM is lower case. Realise how to find it into Customer that is like this: Name, Id
-		field, ok := reflect.TypeOf(&app.Customer{}).Elem().FieldByName(params[0].Field)
-		if !ok {
-			err = errors.New(fmt.Sprintf("field %s not found on Customer", params[0].Field))
-			break
-		}
-
-		key := field.Tag.Get("bson")
-		if len(key) <= 0 {
-			err = errors.New(fmt.Sprintf("field %s has no bson tag into customer", params[0].Field))
-			break
-		}
-
-		filters = bson.D{{key, params[0].Value}}
-	default:
+	case 1:
+		filters = getBsonD(params[0])
+	default: // TODO: test with 2 or more params
 		var andFilter []bson.D
 		for _, param := range params {
-			field, ok := reflect.TypeOf(app.Customer{}).Elem().FieldByName(param.Field)
-			if !ok {
-				err = errors.New(fmt.Sprintf("field %s not found on Customer", param.Field))
-				break paramsSwitch
-			}
-
-			key := field.Tag.Get("bson")
-			if len(key) <= 0 {
-				err = errors.New(fmt.Sprintf("field %s has not bson tag into customer", param.Field))
-				break paramsSwitch
-			}
-
-			andFilter = append(andFilter, bson.D{{key, param.Value}})
+			andFilter = append(andFilter, getBsonD(param))
 		}
-
 		filters = bson.D{{"$and", bson.A{andFilter}}}
 	}
 
-	return filters, err
+	return filters
 }
 
 func unmarshalCustomer(data []byte) (app.Customer, error) {

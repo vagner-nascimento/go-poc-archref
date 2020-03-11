@@ -47,10 +47,11 @@ func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Cu
 		return Customer{}, err
 	}
 
-	// TODO: think in a better way to send params to the repo
+	var val []interface{}
+	val = append(val, user.EMail)
 	customers, total, err := repository.GetMany([]SearchParameter{{
-		Field: "EMail",
-		Value: user.EMail,
+		Field:  "eMail", // TODO: it should be json tag name
+		Values: val,
 	}},
 		0,
 		2)
@@ -80,5 +81,6 @@ func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
 }
 
 func FindCustomers(params []SearchParameter, page int64, quantity int64, repository CustomerDataHandler) (res []Customer, total int64, err error) {
+
 	return repository.GetMany(params, page, quantity)
 }

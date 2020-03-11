@@ -24,8 +24,8 @@ type user struct {
 }
 
 type SearchParameter struct {
-	Field string
-	Value string
+	Field  string
+	Values []interface{}
 }
 
 func makeCustomerFromBytes(bytes []byte) (Customer, error) {
