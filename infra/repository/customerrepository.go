@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
@@ -101,18 +102,19 @@ func (o *CustomerRepository) Replace(customer app.Customer) error {
 	return nil
 }
 
-// TODO: realise how to convert number values into its type to work on mongo
 func getBsonFilters(params []app.SearchParameter) bson.D {
 	convertValue := func(val interface{}) (res interface{}) {
-		res = val
-		switch val.(type) { // IT AWAYS COMES STRING
-		case int, int64, int8, int32:
-			res = val.(int64)
-		case float32, float64:
-			res, _ = val.(float64)
+		if res, err := strconv.ParseInt(val.(string), 0, 64); err == nil {
+			return res
+		}
+		if res, err := strconv.ParseFloat(val.(string), 64); err == nil {
+			return res
+		}
+		if res, err := strconv.ParseBool(val.(string)); err == nil {
+			return res
 		}
 
-		return res
+		return val.(string)
 	}
 	convertValues := func(vals []interface{}) (res []interface{}) {
 		for _, val := range vals {
