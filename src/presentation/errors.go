@@ -3,7 +3,7 @@ package presentation
 import (
 	"errors"
 	"fmt"
-	"github.com/vagner-nascimento/go-poc-archref/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
 
 func simpleError(err error, msg string) error {

@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/vagner-nascimento/go-poc-archref/environment"
-	"github.com/vagner-nascimento/go-poc-archref/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
 
 type (

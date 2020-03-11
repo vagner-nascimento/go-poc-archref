@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"github.com/vagner-nascimento/go-poc-archref/app"
-	"github.com/vagner-nascimento/go-poc-archref/infra"
-	"github.com/vagner-nascimento/go-poc-archref/infra/data"
+	"github.com/vagner-nascimento/go-poc-archref/src/app"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/data"
 )
 
 const (

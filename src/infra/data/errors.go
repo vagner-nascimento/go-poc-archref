@@ -3,7 +3,7 @@ package data
 import (
 	"errors"
 	"fmt"
-	"github.com/vagner-nascimento/go-poc-archref/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
 
 func connectionError(err error, resource string) error {

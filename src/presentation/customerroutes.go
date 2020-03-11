@@ -11,8 +11,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/vagner-nascimento/go-poc-archref/app"
-	"github.com/vagner-nascimento/go-poc-archref/infra/repository"
+	"github.com/vagner-nascimento/go-poc-archref/src/app"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/repository"
 )
 
 func newCustomersRoutes() *chi.Mux {

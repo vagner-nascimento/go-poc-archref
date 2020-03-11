@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/vagner-nascimento/go-poc-archref/environment"
-	"github.com/vagner-nascimento/go-poc-archref/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 	"net/http"
 )
 

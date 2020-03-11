@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vagner-nascimento/go-poc-archref/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
 
 func main() {
