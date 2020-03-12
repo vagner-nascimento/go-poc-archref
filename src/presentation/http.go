@@ -33,15 +33,15 @@ func StartHttpServer() error {
 		r.Mount("/customers", newCustomersRoutes()) // TODO try mount other routers here
 	})
 
+	walkThroughRoutes := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		infra.LogInfo(fmt.Sprintf("%s %s", method, route))
+		return nil
+	}
+
 	if err := chi.Walk(router, walkThroughRoutes); err != nil {
 		return simpleError(err, "error on make http routes")
 	}
 
 	go http.ListenAndServe(environment.GetHttpPort(":"), router)
-	return nil
-}
-
-func walkThroughRoutes(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-	infra.LogInfo(fmt.Sprintf("%s %s", method, route))
 	return nil
 }

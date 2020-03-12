@@ -141,12 +141,12 @@ func getBsonFilters(params []app.SearchParameter) bson.D {
 		filters = bson.D{{}}
 	case 1:
 		filters = getBsonD(params[0])
-	default: // TODO: test with 2 or more params
+	default: //
 		var andFilter []bson.D
 		for _, param := range params {
 			andFilter = append(andFilter, getBsonD(param))
 		}
-		filters = bson.D{{"$and", bson.A{andFilter}}}
+		filters = bson.D{{"$and", andFilter}}
 	}
 
 	return filters

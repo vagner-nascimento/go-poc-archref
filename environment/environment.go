@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+const MaxPaginatedSearch = 100
+
 var (
 	env          string
 	envOnce      sync.Once
@@ -20,7 +22,6 @@ func GetEnv() string {
 			}
 		}
 	})
-
 	return env
 }
 
@@ -33,6 +34,5 @@ func GetHttpPort(prefix string) string {
 			}
 		}
 	})
-
 	return prefix + httpPort
 }

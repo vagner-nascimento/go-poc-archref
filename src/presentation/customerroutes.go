@@ -5,20 +5,22 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
+	"github.com/vagner-nascimento/go-poc-archref/environment"
 	"github.com/vagner-nascimento/go-poc-archref/src/app"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/repository"
+	"github.com/vagner-nascimento/go-poc-archref/src/tool"
 )
 
 func newCustomersRoutes() *chi.Mux {
 	router := chi.NewRouter()
 	router.Post("/", postCustomer)
 	router.Put("/{id}", putCustomer)
+	router.Delete("/{id}", deleteCustomer)
 	router.Get("/{id}", getCustomer)
 	router.Get("/", getCustomersPaginated)
 
@@ -33,19 +35,12 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		render.JSON(w, r, castError(err, "io.Reader", "bytes"))
+		return
 	}
 
 	if customer, err := app.CreateCustomer(bytes, &repository.CustomerRepository{}); err != nil {
 		render.JSON(w, r, err)
 		return
-	} else {
-		render.JSON(w, r, customer)
-	}
-}
-
-func getCustomer(w http.ResponseWriter, r *http.Request) {
-	if customer, err := app.FindCustomer(chi.URLParam(r, "id"), &repository.CustomerRepository{}); err != nil {
-		render.JSON(w, r, err)
 	} else {
 		render.JSON(w, r, customer)
 	}
@@ -57,10 +52,26 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		render.JSON(w, r, castError(err, "http request", "bytes"))
+		return
 	}
 
 	if customer, err := app.UpdateCustomer(id, bytes, &repository.CustomerRepository{}); err != nil {
 		render.JSON(w, r, err)
+		return
+	} else {
+		render.JSON(w, r, customer)
+	}
+}
+
+// TODO: implement DELETE CUSTOMER
+func deleteCustomer(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func getCustomer(w http.ResponseWriter, r *http.Request) {
+	if customer, err := app.FindCustomer(chi.URLParam(r, "id"), &repository.CustomerRepository{}); err != nil {
+		render.JSON(w, r, err)
+		return
 	} else {
 		render.JSON(w, r, customer)
 	}
@@ -72,41 +83,34 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 		err      error
 		params   []app.SearchParameter
 		page     int64
-		quantity int64
+		pageSize int64
 	)
-	isArray := func(param string) bool {
-		return strings.HasPrefix(param, "[") && strings.HasSuffix(param, "]")
-	}
 
 	for key := range query {
 		if key == "page" {
-			page, err = strconv.ParseInt(query.Get(key), 0, 64)
+			page, err = tool.SafeParseInt(query.Get(key))
 			if err != nil {
 				render.JSON(w, r, simpleError(err, "cant convert page into int"))
 				return
 			}
-		} else if key == "quantity" {
-			quantity, err = strconv.ParseInt(query.Get(key), 0, 64)
+		} else if key == "pageSize" {
+			pageSize, err = tool.SafeParseInt(query.Get(key))
 			if err != nil {
-				render.JSON(w, r, simpleError(err, "cant convert quantity into int"))
+				render.JSON(w, r, simpleError(err, "cant convert pageSize into int"))
 				return
 			}
-		} else { // TODO: fix: http Query(): brings only the first parameter. If pass two equal params like this: ?name=Va&name=Je
-			jsonParam := query.Get(key)
+		} else {
+			param := query.Get(key)
+
 			var paramValues []interface{}
-			if isArray(jsonParam) {
-				dec := json.NewDecoder(strings.NewReader(jsonParam))
+			if tool.StringIsArray(param) {
+				dec := json.NewDecoder(strings.NewReader(param))
 				if err = dec.Decode(&paramValues); err != nil {
 					render.JSON(w, r, simpleError(err, fmt.Sprintf("cant convert %s into query param", key)))
 					return
 				}
 			} else {
-				// if strings.HasPrefix(jsonParam, "\"") && strings.HasSuffix(jsonParam, "\"") {
-				// 	jsonParam = jsonParam[:len(jsonParam)-len("\"")]
-				// 	jsonParam = strings.Replace(jsonParam, "\"", "", 1)
-				// }
-
-				paramValues = append(paramValues, strings.Replace(jsonParam, "\"", "", -1))
+				paramValues = append(paramValues, strings.Replace(param, "\"", "", -1))
 			}
 
 			params = append(params, app.SearchParameter{
@@ -116,16 +120,15 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if quantity == 0 {
-		quantity = 100
+	if pageSize == 0 {
+		pageSize = environment.MaxPaginatedSearch
 	}
 
-	customers, total, err := app.FindCustomers(params, page, quantity, &repository.CustomerRepository{})
-	if err != nil { // TODO: handle not found to sent empty array
+	customers, total, err := app.FindCustomers(params, page, pageSize, &repository.CustomerRepository{})
+	if err != nil {
 		render.JSON(w, r, err)
+		return
 	} else {
-		pgQtd := len(customers)
-		res := newPaginatedResponse(customers, page, pgQtd, total)
-		render.JSON(w, r, res)
+		render.JSON(w, r, newPaginatedResponse(customers, page, len(customers), total))
 	}
 }

@@ -18,7 +18,10 @@ POC to define an architecture reference in Golang
 }
     - other customer's payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
  
- - **HTTP/GET**: http://localhost:3000/api/v1/customers/{id}
+ - **HTTP/GET** (by id): http://localhost:3000/api/v1/customers/{id}
+ - **HTTP/GET** (by params): http://localhost:3000/api/v1/customers?p=val&p1=val1&valArr=["it1", "it2"]
+    - params can be any Customer attributes. If you want to search in a range of some value, send as array, like above
+    - don't send multiple params with same name, like ?name=Jhon&name=Mary, it will consider only the first one   
  - **HTTP/PUT**: http://localhost:3000/api/v1/customers/{id}
     - body (json):  
       {  
