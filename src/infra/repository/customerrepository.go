@@ -102,6 +102,11 @@ func (o *CustomerRepository) Replace(customer app.Customer) error {
 	return nil
 }
 
+func NewCustomerRepository() *CustomerRepository {
+	return &CustomerRepository{}
+}
+
+// TODO: think in a better place form these 2 funcs:
 func getBsonFilters(params []app.SearchParameter) bson.D {
 	convertValue := func(val interface{}) (res interface{}) {
 		if res, err := strconv.ParseInt(val.(string), 0, 64); err == nil {
@@ -151,7 +156,6 @@ func getBsonFilters(params []app.SearchParameter) bson.D {
 
 	return filters
 }
-
 func unmarshalCustomer(data []byte) (app.Customer, error) {
 	var customer app.Customer
 	err := bson.Unmarshal(data, &customer)

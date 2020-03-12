@@ -13,7 +13,7 @@ const (
 
 func newUserSubscriber() data.AmqSubscriber {
 	messageHandler := func(data []byte) {
-		if _, err := app.UpdateCustomerFromUser(data, &CustomerRepository{}); err != nil {
+		if _, err := app.UpdateCustomerFromUser(data, NewCustomerRepository()); err != nil {
 			infra.LogError("error on update a customer", err)
 		}
 	}

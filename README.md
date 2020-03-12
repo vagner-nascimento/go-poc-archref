@@ -17,22 +17,22 @@ POC to define an architecture reference in Golang
  "eMail": "gerald@witcher-mail.com"  
 }
     - other customer's payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
- 
+ - **HTTP/PUT**: http://localhost:3000/api/v1/customers/{id}
+     - body (json):  
+       {  
+        "name": "Gerald",  
+        "birthYear": 1768,  
+        "birthDay": 6,  
+        "birthMonth": 1,  
+        "eMail": "gerald@witcher-mail.com",  
+ "userId": "026616e2-063a-408b-aa45-99dc671081db"  
+ }
+  
  - **HTTP/GET** (by id): http://localhost:3000/api/v1/customers/{id}
  - **HTTP/GET** (by params): http://localhost:3000/api/v1/customers?p=val&p1=val1&valArr=["it1", "it2"]
     - params can be any Customer attributes. If you want to search in a range of some value, send as array, like above
     - don't send multiple params with same name, like ?name=Jhon&name=Mary, it will consider only the first one   
- - **HTTP/PUT**: http://localhost:3000/api/v1/customers/{id}
-    - body (json):  
-      {  
-       "name": "Gerald",  
-       "birthYear": 1768,  
-       "birthDay": 6,  
-       "birthMonth": 1,  
-       "eMail": "gerald@witcher-mail.com",  
-"userId": "026616e2-063a-408b-aa45-99dc671081db"  
-}
- 
+  
  - **AMQP/UPDATE**:
     - insert a customer through **HTTP/POST** method 
     - access http://localhost:15672/#/queues/%2F/q-user
@@ -45,9 +45,9 @@ POC to define an architecture reference in Golang
     - on **Get messages** menu increase **Messages** field to 50 (or more) and click on **Get Message(s)**
 
 # next steps
-- Build get list by query params and patch
+- Develop delete and patch
 
 # utils
+- Golang: https://golang.org/
 - Docker installation: https://docs.docker.com/install/
 - Docker-compose installation: https://docs.docker.com/compose/install/
-- Golang: https://golang.org/

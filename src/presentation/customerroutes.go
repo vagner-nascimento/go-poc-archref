@@ -20,10 +20,10 @@ func newCustomersRoutes() *chi.Mux {
 	router := chi.NewRouter()
 	router.Post("/", postCustomer)
 	router.Put("/{id}", putCustomer)
+	router.Patch("/{id}", patchCustomer)
 	router.Delete("/{id}", deleteCustomer)
 	router.Get("/{id}", getCustomer)
 	router.Get("/", getCustomersPaginated)
-
 	return router
 }
 
@@ -38,7 +38,7 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if customer, err := app.CreateCustomer(bytes, &repository.CustomerRepository{}); err != nil {
+	if customer, err := app.CreateCustomer(bytes, repository.NewCustomerRepository()); err != nil {
 		render.JSON(w, r, err)
 		return
 	} else {
@@ -55,12 +55,17 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if customer, err := app.UpdateCustomer(id, bytes, &repository.CustomerRepository{}); err != nil {
+	if customer, err := app.UpdateCustomer(id, bytes, repository.NewCustomerRepository()); err != nil {
 		render.JSON(w, r, err)
 		return
 	} else {
 		render.JSON(w, r, customer)
 	}
+}
+
+// TODO: implement patch
+func patchCustomer(w http.ResponseWriter, r *http.Request) {
+
 }
 
 // TODO: implement DELETE CUSTOMER
@@ -69,7 +74,7 @@ func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCustomer(w http.ResponseWriter, r *http.Request) {
-	if customer, err := app.FindCustomer(chi.URLParam(r, "id"), &repository.CustomerRepository{}); err != nil {
+	if customer, err := app.FindCustomer(chi.URLParam(r, "id"), repository.NewCustomerRepository()); err != nil {
 		render.JSON(w, r, err)
 		return
 	} else {
@@ -124,7 +129,7 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 		pageSize = environment.MaxPaginatedSearch
 	}
 
-	customers, total, err := app.FindCustomers(params, page, pageSize, &repository.CustomerRepository{})
+	customers, total, err := app.FindCustomers(params, page, pageSize, repository.NewCustomerRepository())
 	if err != nil {
 		render.JSON(w, r, err)
 		return
