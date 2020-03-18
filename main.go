@@ -4,9 +4,12 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
 
-func main() {
+func init() {
 	infra.LogInfo("loading configurations")
 	loadConfiguration()
+}
+
+func main() {
 	infra.LogInfo("loading http presentation")
 	loadHttpPresentation()
 	infra.LogInfo("application is running")
