@@ -11,7 +11,7 @@ import (
 /*
     TODO: Http presentation - list of tasks bellow
 	Requirements list:
-		From Node Project
+		From Node Projects:
 		- .use(methodOverride('X-HTTP-Method-Override'))
         - .use(cors())
         - .use(bodyParser.json())
@@ -30,7 +30,7 @@ import (
 func StartHttpServer() error {
 	router := chi.NewRouter()
 	router.Route("/api/v1", func(r chi.Router) {
-		r.Mount("/customers", newCustomersRoutes()) // TODO try mount other routers here
+		r.Mount("/customers", newCustomersRoutes()) // TODO: try mount other routers here
 	})
 
 	walkThroughRoutes := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {

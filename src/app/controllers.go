@@ -1,11 +1,5 @@
 package app
 
-// TODO: review return without var names
-/*
-	search in project by
-	return
-}
-*/
 func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Customer, error) {
 	customer, err := getCustomer(customerData)
 	if err == nil {
@@ -68,7 +62,7 @@ func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Cu
 	var val []interface{}
 	val = append(val, user.EMail)
 	customers, total, err := repository.GetMany([]SearchParameter{{
-		Field:  "eMail", // TODO: it should be json tag name
+		Field:  "eMail", // TODO: realize how to get json tag name from its definition
 		Values: val,
 	}},
 		0,

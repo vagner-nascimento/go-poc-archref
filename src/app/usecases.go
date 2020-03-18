@@ -12,12 +12,12 @@ func getCustomer(data []byte) (Customer, error) {
 func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
 	if len(oldCustomer.Id) <= 0 {
 		err = customerNotFoundError()
-		return
+		return newCustomer, err
 	}
 
 	newData, err := makeCustomerFromBytes(data)
 	if err != nil {
-		return
+		return newCustomer, err
 	}
 
 	newCustomer = mapCustomerToUpdate(oldCustomer, newData)
@@ -27,12 +27,12 @@ func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Custome
 func getCustomerToUpdateEmail(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
 	if len(oldCustomer.Id) <= 0 {
 		err = customerNotFoundError()
-		return
+		return newCustomer, err
 	}
 
 	newData, err := makeCustomerFromBytes(data)
 	if err != nil {
-		return
+		return newCustomer, err
 	}
 	if newData.EMail == "" {
 		return newCustomer, validationError([]string{"email must be informed"})

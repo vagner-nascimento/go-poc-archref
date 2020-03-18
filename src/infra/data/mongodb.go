@@ -68,7 +68,6 @@ func (o *MongoDb) Find(filters bson.D, maxDocs int64, page int64, results chan i
 	}
 
 	var err error
-
 	ctx, _ := context.WithTimeout(context.Background(), config.Get().Data.NoSql.Mongo.FindTimeout*time.Second)
 	*total, err = o.collection.CountDocuments(ctx, filters)
 	if shouldExit(err) {
