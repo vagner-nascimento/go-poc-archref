@@ -10,17 +10,17 @@ const customerQueue = "q-customer"
 func publishCustomer(c interface{}) error {
 	uBytes, err := json.Marshal(c)
 	if err != nil {
-		return conversionError(err, "customer", "bytes array")
+		return err
 	}
 
 	pub, err := data.NewAmqpPublisher(customerQueue)
 	if err != nil {
-		return operationError("publish", "customer")
+		return err
 	}
 
 	err = pub.Publish(uBytes)
 	if err != nil {
-		return operationError("publish", "customer")
+		return err
 	}
 
 	return nil

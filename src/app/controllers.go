@@ -1,5 +1,7 @@
 package app
 
+import "errors"
+
 func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Customer, error) {
 	customer, err := getCustomer(customerData)
 	if err == nil {
@@ -69,9 +71,9 @@ func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Cu
 		2)
 
 	if total > 1 {
-		return Customer{}, validationError([]string{"to many register with the same e-mail"})
+		return Customer{}, errors.New("to many register with the same e-mail")
 	} else if total == 0 {
-		return Customer{}, customerNotFoundError()
+		return Customer{}, errors.New("customer not found")
 	}
 
 	newCustomer := mergeUserToCustomer(user, customers[0])
@@ -86,7 +88,7 @@ func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
 	if customer, err := repository.Get(id); err != nil {
 		return Customer{}, err
 	} else if len(customer.Id) <= 0 {
-		return Customer{}, customerNotFoundError()
+		return Customer{}, errors.New("customer not found")
 	} else {
 		return customer, nil
 	}

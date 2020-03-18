@@ -3,17 +3,14 @@ FROM golang:alpine
 # Install bash to use at compose commands
 RUN apk update && apk add bash
 
-# Set necessary environment variables needed for our image
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64 \
     GO_ENV=docker
 
-# Move to working directory /build
 WORKDIR /build
 
-# Copy the code into the container
 COPY . .
 
 # Download dependency using go mod
@@ -26,16 +23,14 @@ RUN go build -o main .
 RUN mkdir /scripts
 RUN mv ./docker/wait-for-it.sh /scripts
 
-# Make app folder
 RUN mkdir /app
 
 # Copy binary from build to app folder
 RUN cp main /app
 
-# Copy config files
+# Copy config files into the app folder
 RUN cp -rf config/ /app
 
-# Remove all files on /build
 RUN rm -rf /build
 
 WORKDIR /app

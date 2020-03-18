@@ -28,7 +28,6 @@ func loadHttpPresentation() {
 		infra.LogInfo("cannot load http presentation")
 		return
 	}
-
 	infra.LogInfo("http presentation loaded")
 }
 

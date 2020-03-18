@@ -2,7 +2,6 @@ package presentation
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/vagner-nascimento/go-poc-archref/config"
 	"io/ioutil"
 	"net/http"
@@ -39,7 +38,7 @@ func getIdFromPath(path string, skip int) string {
 func postCustomer(w http.ResponseWriter, r *http.Request) {
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		render.JSON(w, r, castError(err, "io.Reader", "bytes"))
+		render.JSON(w, r, err)
 		return
 	}
 
@@ -55,7 +54,7 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 	id := getIdFromPath(r.URL.Path, 1)
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		render.JSON(w, r, castError(err, "http request", "bytes"))
+		render.JSON(w, r, err)
 		return
 	}
 	if customer, err := app.UpdateCustomer(id, bytes, repository.NewCustomerRepository()); err != nil {
@@ -71,7 +70,7 @@ func patchCustomerEmail(w http.ResponseWriter, r *http.Request) {
 	id := getIdFromPath(r.URL.Path, 2)
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		render.JSON(w, r, castError(err, "http request", "bytes"))
+		render.JSON(w, r, err)
 		return
 	}
 	if customer, err := app.UpdateCustomerEmail(id, bytes, repository.NewCustomerRepository()); err != nil {
@@ -109,22 +108,22 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 		if key == "page" {
 			page, err = tool.SafeParseInt(query.Get(key))
 			if err != nil {
-				render.JSON(w, r, simpleError(err, "cant convert page into int"))
+				render.JSON(w, r, err)
 				return
 			}
 		} else if key == "pageSize" {
 			pageSize, err = tool.SafeParseInt(query.Get(key))
 			if err != nil {
-				render.JSON(w, r, simpleError(err, "cant convert pageSize into int"))
+				render.JSON(w, r, err)
 				return
 			}
 		} else {
 			param := query.Get(key)
 			var paramValues []interface{}
-			if tool.StringIsArray(param) {
+			if tool.IsStringArray(param) {
 				dec := json.NewDecoder(strings.NewReader(param))
 				if err = dec.Decode(&paramValues); err != nil {
-					render.JSON(w, r, simpleError(err, fmt.Sprintf("cant convert %s into query param", key)))
+					render.JSON(w, r, err)
 					return
 				}
 			} else {

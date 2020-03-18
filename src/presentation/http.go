@@ -39,7 +39,7 @@ func StartHttpServer() error {
 	}
 
 	if err := chi.Walk(router, walkThroughRoutes); err != nil {
-		return simpleError(err, "error on make http routes")
+		return err
 	}
 
 	go http.ListenAndServe(fmt.Sprintf(":%d", config.Get().Presentation.Web.Port), router)

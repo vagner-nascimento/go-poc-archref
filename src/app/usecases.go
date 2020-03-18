@@ -1,5 +1,10 @@
 package app
 
+import (
+	"errors"
+	"strings"
+)
+
 func getCustomer(data []byte) (Customer, error) {
 	c, err := makeCustomerFromBytes(data)
 	if err != nil {
@@ -11,7 +16,7 @@ func getCustomer(data []byte) (Customer, error) {
 
 func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
 	if len(oldCustomer.Id) <= 0 {
-		err = customerNotFoundError()
+		err = errors.New("customer not found")
 		return newCustomer, err
 	}
 
@@ -26,7 +31,7 @@ func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Custome
 
 func getCustomerToUpdateEmail(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
 	if len(oldCustomer.Id) <= 0 {
-		err = customerNotFoundError()
+		err = errors.New("customer not found")
 		return newCustomer, err
 	}
 
@@ -35,7 +40,7 @@ func getCustomerToUpdateEmail(oldCustomer Customer, data []byte) (newCustomer Cu
 		return newCustomer, err
 	}
 	if newData.EMail == "" {
-		return newCustomer, validationError([]string{"email must be informed"})
+		return newCustomer, errors.New("email must be informed")
 	}
 
 	newCustomer = oldCustomer
@@ -68,7 +73,7 @@ func validateUser(u user) error {
 	}
 
 	if len(msgs) > 0 {
-		return validationError(msgs)
+		return errors.New(strings.Join(msgs, ","))
 	}
 
 	return nil

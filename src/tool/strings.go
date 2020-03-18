@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func StringIsArray(str string) bool {
+func IsStringArray(str string) bool {
 	return strings.HasPrefix(str, "[") && strings.HasSuffix(str, "]")
 }
 

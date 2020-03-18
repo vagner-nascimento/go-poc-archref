@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 	"github.com/streadway/amqp"
 	"github.com/vagner-nascimento/go-poc-archref/config"
@@ -47,7 +48,7 @@ type AmqPublisher struct {
 func (o *AmqPublisher) Publish(data []byte) error {
 	ch, err := amqpConnect()
 	if err != nil {
-		return connectionError(err, "amqp server")
+		return err
 	}
 
 	q, err := ch.QueueDeclare(
@@ -60,7 +61,7 @@ func (o *AmqPublisher) Publish(data []byte) error {
 	)
 
 	if err != nil {
-		return execError(err, "declare queue", "amqp server")
+		return err
 	}
 
 	err = ch.Publish(
@@ -75,7 +76,7 @@ func (o *AmqPublisher) Publish(data []byte) error {
 	)
 
 	if err != nil {
-		return execError(err, "publish message", "amqp server")
+		return err
 	}
 
 	return nil
@@ -129,7 +130,7 @@ func NewAmqpSubscriber(queueName string, consumerName string, handler func([]byt
 func SubscribeConsumers(subscribers []AmqSubscriber) error {
 	ch, err := amqpConnect()
 	if err != nil {
-		return connectionError(err, "amqp server")
+		return err
 	}
 
 	var qNames string
@@ -156,7 +157,7 @@ func SubscribeConsumers(subscribers []AmqSubscriber) error {
 		<-keepListening
 	}
 
-	return simpleError("none queue can be listened")
+	return errors.New("none queue can be listened")
 }
 
 func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
@@ -169,7 +170,7 @@ func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
 		sub.queue.Args, // Queue Table Args
 	)
 	if err != nil {
-		return nil, execError(err, "declare a channel", "amqp server")
+		return nil, err
 	}
 
 	msgs, err := ch.Consume(
@@ -182,7 +183,7 @@ func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
 		nil,
 	)
 	if err != nil {
-		return nil, execError(err, "consume a queue", "amqp server")
+		return nil, err
 	}
 
 	return func() {

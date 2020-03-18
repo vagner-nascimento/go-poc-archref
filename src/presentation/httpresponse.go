@@ -16,11 +16,9 @@ func newPaginatedResponse(data interface{}, page int64, quantity int, total int6
 		data = make([]interface{}, 0)
 		page = 1
 	}
-
 	if page <= 0 {
 		page = 1
 	}
-
 	return paginatedResponse{
 		Data:     data,
 		Page:     page,

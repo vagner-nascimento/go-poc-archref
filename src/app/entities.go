@@ -31,7 +31,7 @@ type SearchParameter struct {
 func makeCustomerFromBytes(bytes []byte) (Customer, error) {
 	var c Customer
 	if err := json.Unmarshal(bytes, &c); err != nil {
-		return c, conversionError("bytes", "customer")
+		return c, err
 	}
 
 	return c, nil
@@ -40,7 +40,7 @@ func makeCustomerFromBytes(bytes []byte) (Customer, error) {
 func makeUserFromBytes(data []byte) (user, error) {
 	var u user
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, conversionError("bytes", "user")
+		return u, err
 	}
 
 	return u, nil

@@ -51,16 +51,14 @@ func Load(environment string) error {
 		return errors.New("config is already loaded")
 	}
 
-	absPat, err := filepath.Abs(fmt.Sprintf("config/%s.json", strings.ToLower(environment)))
-	bytes, err := ioutil.ReadFile(absPat)
+	path, _ := filepath.Abs(fmt.Sprintf("config/%s.json", strings.ToLower(environment)))
+	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
-
 	if err := json.Unmarshal(bytes, &config); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -68,6 +66,5 @@ func Get() Config {
 	if config == nil {
 		panic("config not loaded")
 	}
-
 	return *config
 }

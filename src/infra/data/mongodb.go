@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/vagner-nascimento/go-poc-archref/config"
 	"go.mongodb.org/mongo-driver/bson"
@@ -28,7 +29,7 @@ type MongoDb struct {
 func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 	ctx, _ := context.WithTimeout(context.Background(), config.Get().Data.NoSql.Mongo.InsertTimeout*time.Second)
 	if _, err := o.collection.InsertOne(ctx, entity); err != nil {
-		return nil, execError(err, "insertOne", "mongodb server")
+		return nil, err
 	}
 
 	return entity, nil
@@ -41,19 +42,19 @@ func (o *MongoDb) FindOne(filters bson.D) ([]byte, error) {
 		if strings.Contains(err.Error(), "no documents in result") {
 			return nil, nil
 		}
-		return nil, execError(err, "find one", "mongodb server")
+		return nil, err
 	}
 
 	result, err := bson.Marshal(raw)
 	if err != nil {
-		return nil, execError(err, "find one", "mongodb server")
+		return nil, err
 	}
 	return result, nil
 }
 
 func (o *MongoDb) Find(filters bson.D, maxDocs int64, page int64, results chan interface{}, total *int64) {
 	if maxDocs <= 0 || page < 0 {
-		results <- simpleError(fmt.Sprintf("invalid parameters, maxDocs: %s, page: %s", maxDocs, page))
+		results <- errors.New(fmt.Sprintf("invalid parameters, maxDocs: %s, page: %s", maxDocs, page))
 		close(results)
 		return
 	}
@@ -108,7 +109,7 @@ func (o *MongoDb) ReplaceOne(filter bson.M, newData interface{}) (int64, error) 
 
 func NewMongoDb(collectionName string) (*MongoDb, error) {
 	if err := mongoDbConnect(); err != nil {
-		return nil, connectionError(err, "mongodb server")
+		return nil, err
 	}
 
 	return &MongoDb{
@@ -132,7 +133,7 @@ func mongoDbConnect() (err error) {
 	})
 
 	if err != nil {
-		return connectionError(err, "mongodb server")
+		return err
 	}
 
 	return err
