@@ -1,53 +1,17 @@
 package app
 
 import (
-	"encoding/json"
+	"github.com/vagner-nascimento/go-poc-archref/src/model"
 )
 
-type Customer struct {
-	Id         string `json:"id" bson:"id"`
-	Name       string `json:"name" bson:"name"`
-	EMail      string `json:"eMail" bson:"eMail"`
-	BirthYear  int    `json:"birthYear" bson:"birthYear"`
-	BirthDay   int    `json:"birthDay" bson:"birthDay"`
-	BirthMonth int    `json:"birthMonth" bson:"birthMont"`
-	UserId     string `json:"userId" bson:"userId"`
-}
-
-type user struct {
-	Id         string `json:"id"`
-	Name       string `json:"name"`
-	EMail      string `json:"eMail"`
-	BirthYear  int    `json:"birthYear"`
-	BirthDay   int    `json:"birthDay"`
-	BirthMonth int    `json:"birthMonth"`
-}
-
+// TODO: think in better way to pass parameters to the queries
 type SearchParameter struct {
 	Field  string
 	Values []interface{}
 }
 
-func makeCustomerFromBytes(bytes []byte) (Customer, error) {
-	var c Customer
-	if err := json.Unmarshal(bytes, &c); err != nil {
-		return c, err
-	}
-
-	return c, nil
-}
-
-func makeUserFromBytes(data []byte) (user, error) {
-	var u user
-	if err := json.Unmarshal(data, &u); err != nil {
-		return u, err
-	}
-
-	return u, nil
-}
-
-func mapUserToCustomer(u user, c Customer) Customer {
-	return Customer{
+func mapUserToCustomer(u model.User, c model.Customer) model.Customer {
+	return model.Customer{
 		Id:         c.Id,
 		Name:       u.Name,
 		EMail:      u.EMail,
@@ -58,8 +22,8 @@ func mapUserToCustomer(u user, c Customer) Customer {
 	}
 }
 
-func mapCustomerToUpdate(oldCustomer Customer, newCustomer Customer) Customer {
-	return Customer{
+func mapCustomerToUpdate(oldCustomer model.Customer, newCustomer model.Customer) model.Customer {
+	return model.Customer{
 		Id:         oldCustomer.Id,
 		Name:       newCustomer.Name,
 		EMail:      newCustomer.EMail,

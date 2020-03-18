@@ -1,19 +1,22 @@
 package app
 
-import "errors"
+import (
+	"errors"
+	"github.com/vagner-nascimento/go-poc-archref/src/model"
+)
 
-func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Customer, error) {
+func CreateCustomer(customerData []byte, repository CustomerDataHandler) (model.Customer, error) {
 	customer, err := getCustomer(customerData)
 	if err == nil {
 		if err = repository.Save(&customer); err != nil {
-			customer = Customer{}
+			customer = model.Customer{}
 		}
 	}
 
 	return customer, err
 }
 
-func UpdateCustomerEmail(id string, customerData []byte, repository CustomerDataHandler) (newCustomer Customer, err error) {
+func UpdateCustomerEmail(id string, customerData []byte, repository CustomerDataHandler) (newCustomer model.Customer, err error) {
 	foundCustomer, err := repository.Get(id)
 	if err != nil {
 		return newCustomer, err
@@ -24,15 +27,15 @@ func UpdateCustomerEmail(id string, customerData []byte, repository CustomerData
 	}
 
 	if err = repository.Replace(newCustomer); err != nil {
-		newCustomer = Customer{}
+		newCustomer = model.Customer{}
 		return newCustomer, err
 	}
 
 	return newCustomer, err
 }
 
-func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (newCustomer Customer, err error) {
-	var foundCustomer Customer
+func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (newCustomer model.Customer, err error) {
+	var foundCustomer model.Customer
 	foundCustomer, err = repository.Get(id)
 	if err != nil {
 		return newCustomer, err
@@ -44,21 +47,21 @@ func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandl
 	}
 
 	if err = repository.Replace(newCustomer); err != nil {
-		newCustomer = Customer{}
+		newCustomer = model.Customer{}
 		return newCustomer, err
 	}
 
 	return newCustomer, err
 }
 
-func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Customer, error) {
+func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (model.Customer, error) {
 	user, err := getUser(userData)
 	if err != nil {
-		return Customer{}, err
+		return model.Customer{}, err
 	}
 
 	if err = validateUser(user); err != nil {
-		return Customer{}, err
+		return model.Customer{}, err
 	}
 
 	var val []interface{}
@@ -71,29 +74,29 @@ func UpdateCustomerFromUser(userData []byte, repository CustomerDataHandler) (Cu
 		2)
 
 	if total > 1 {
-		return Customer{}, errors.New("to many register with the same e-mail")
+		return model.Customer{}, errors.New("to many register with the same e-mail")
 	} else if total == 0 {
-		return Customer{}, errors.New("customer not found")
+		return model.Customer{}, errors.New("customer not found")
 	}
 
 	newCustomer := mergeUserToCustomer(user, customers[0])
 	if err = repository.Replace(newCustomer); err != nil {
-		return Customer{}, err
+		return model.Customer{}, err
 	}
 
 	return newCustomer, nil
 }
 
-func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
-	if customer, err := repository.Get(id); err != nil {
-		return Customer{}, err
-	} else if len(customer.Id) <= 0 {
-		return Customer{}, errors.New("customer not found")
-	} else {
-		return customer, nil
+func FindCustomer(id string, repository CustomerDataHandler) (customer model.Customer, err error) {
+	if customer, err = repository.Get(id); err == nil {
+		if len(customer.Id) <= 0 {
+			customer = model.Customer{}
+			err = errors.New("customer not found")
+		}
 	}
+	return customer, err
 }
 
-func FindCustomers(params []SearchParameter, page int64, quantity int64, repository CustomerDataHandler) (res []Customer, total int64, err error) {
+func FindCustomers(params []SearchParameter, page int64, quantity int64, repository CustomerDataHandler) (res []model.Customer, total int64, err error) {
 	return repository.GetMany(params, page, quantity)
 }

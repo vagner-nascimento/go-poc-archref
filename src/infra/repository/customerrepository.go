@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ type CustomerRepository struct {
 
 const customerCollection = "customers"
 
-func (o *CustomerRepository) Save(customer *app.Customer) error {
+func (o *CustomerRepository) Save(customer *model.Customer) error {
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
 		return err
@@ -31,8 +32,8 @@ func (o *CustomerRepository) Save(customer *app.Customer) error {
 	return nil
 }
 
-func (o *CustomerRepository) Get(id string) (app.Customer, error) {
-	var customer app.Customer
+func (o *CustomerRepository) Get(id string) (model.Customer, error) {
+	var customer model.Customer
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
 		return customer, err
@@ -51,7 +52,7 @@ func (o *CustomerRepository) Get(id string) (app.Customer, error) {
 	return customer, nil
 }
 
-func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, quantity int64) (customers []app.Customer, total int64, err error) {
+func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, quantity int64) (customers []model.Customer, total int64, err error) {
 	var db *data.MongoDb
 	db, err = data.NewMongoDb(customerCollection)
 	if err != nil {
@@ -68,7 +69,7 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, q
 	for result := range results {
 		switch val := result.(type) {
 		case []byte:
-			var customer app.Customer
+			var customer model.Customer
 			customer, err = unmarshalCustomer(val)
 			if err != nil {
 				return nil, 0, err
@@ -82,7 +83,7 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, q
 	return customers, total, err
 }
 
-func (o *CustomerRepository) Replace(customer app.Customer) error {
+func (o *CustomerRepository) Replace(customer model.Customer) error {
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
 		return err
@@ -156,8 +157,8 @@ func getBsonFilters(params []app.SearchParameter) bson.D {
 
 	return filters
 }
-func unmarshalCustomer(data []byte) (app.Customer, error) {
-	var customer app.Customer
+func unmarshalCustomer(data []byte) (model.Customer, error) {
+	var customer model.Customer
 	err := bson.Unmarshal(data, &customer)
 	if err != nil {
 		return customer, err

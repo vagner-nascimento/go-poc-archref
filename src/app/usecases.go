@@ -2,25 +2,21 @@ package app
 
 import (
 	"errors"
+	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"strings"
 )
 
-func getCustomer(data []byte) (Customer, error) {
-	c, err := makeCustomerFromBytes(data)
-	if err != nil {
-		return Customer{}, err
-	}
-
-	return c, nil
+func getCustomer(data []byte) (model.Customer, error) {
+	return model.NewCustomerFromJsonBytes(data)
 }
 
-func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
+func getCustomerToUpdate(oldCustomer model.Customer, data []byte) (newCustomer model.Customer, err error) {
 	if len(oldCustomer.Id) <= 0 {
 		err = errors.New("customer not found")
 		return newCustomer, err
 	}
 
-	newData, err := makeCustomerFromBytes(data)
+	newData, err := model.NewCustomerFromJsonBytes(data)
 	if err != nil {
 		return newCustomer, err
 	}
@@ -29,13 +25,13 @@ func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Custome
 	return newCustomer, err
 }
 
-func getCustomerToUpdateEmail(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
+func getCustomerToUpdateEmail(oldCustomer model.Customer, data []byte) (newCustomer model.Customer, err error) {
 	if len(oldCustomer.Id) <= 0 {
 		err = errors.New("customer not found")
 		return newCustomer, err
 	}
 
-	newData, err := makeCustomerFromBytes(data)
+	newData, err := model.NewCustomerFromJsonBytes(data)
 	if err != nil {
 		return newCustomer, err
 	}
@@ -49,27 +45,22 @@ func getCustomerToUpdateEmail(oldCustomer Customer, data []byte) (newCustomer Cu
 	return newCustomer, err
 }
 
-func getUser(data []byte) (user, error) {
-	u, err := makeUserFromBytes(data)
-	if err != nil {
-		return user{}, err
-	}
-
-	return u, nil
+func getUser(data []byte) (model.User, error) {
+	return model.NewUserFromJsonBytes(data)
 }
 
-func validateUser(u user) error {
+func validateUser(u model.User) error {
 	var msgs []string
 	if u.Id == "" {
-		msgs = append(msgs, "user id is required")
+		msgs = append(msgs, "model.User id is required")
 	}
 
 	if u.Name == "" {
-		msgs = append(msgs, "user name is required")
+		msgs = append(msgs, "model.User name is required")
 	}
 
 	if u.EMail == "" {
-		msgs = append(msgs, "user email is required")
+		msgs = append(msgs, "model.User email is required")
 	}
 
 	if len(msgs) > 0 {
@@ -79,6 +70,6 @@ func validateUser(u user) error {
 	return nil
 }
 
-func mergeUserToCustomer(u user, c Customer) Customer {
+func mergeUserToCustomer(u model.User, c model.Customer) model.Customer {
 	return mapUserToCustomer(u, c)
 }
