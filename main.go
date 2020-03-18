@@ -5,6 +5,8 @@ import (
 )
 
 func main() {
+	infra.LogInfo("loading configurations")
+	loadConfiguration()
 	infra.LogInfo("loading http presentation")
 	loadHttpPresentation()
 	infra.LogInfo("application is running")

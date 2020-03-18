@@ -1,0 +1,21 @@
+{
+  "data": {
+    "noSql": {
+      "mongo": {
+        "connStr": "mongodb://admin:admin@go-mongodb:27017",
+        "clientTimeOut": 15,
+        "insertTimeout": 5,
+        "findTimeout": 8,
+        "maxPaginatedSearch": 100
+      }
+    },
+    "amqp": {
+      "connStr": "amqp://guest:guest@go-rabbit-mq:5672"
+    }
+  },
+  "presentation": {
+    "web": {
+      "port": 3000
+    }
+  }
+}

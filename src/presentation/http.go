@@ -3,7 +3,7 @@ package presentation
 import (
 	"fmt"
 	"github.com/go-chi/chi"
-	"github.com/vagner-nascimento/go-poc-archref/environment"
+	"github.com/vagner-nascimento/go-poc-archref/config"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 	"net/http"
 )
@@ -42,6 +42,6 @@ func StartHttpServer() error {
 		return simpleError(err, "error on make http routes")
 	}
 
-	go http.ListenAndServe(environment.GetHttpPort(":"), router)
+	go http.ListenAndServe(fmt.Sprintf(":%d", config.Get().Presentation.Web.Port), router)
 	return nil
 }

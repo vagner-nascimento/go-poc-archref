@@ -24,6 +24,26 @@ func getCustomerToUpdate(oldCustomer Customer, data []byte) (newCustomer Custome
 	return newCustomer, err
 }
 
+func getCustomerToUpdateEmail(oldCustomer Customer, data []byte) (newCustomer Customer, err error) {
+	if len(oldCustomer.Id) <= 0 {
+		err = customerNotFoundError()
+		return
+	}
+
+	newData, err := makeCustomerFromBytes(data)
+	if err != nil {
+		return
+	}
+	if newData.EMail == "" {
+		return newCustomer, validationError([]string{"email must be informed"})
+	}
+
+	newCustomer = oldCustomer
+	newCustomer.EMail = newData.EMail
+
+	return newCustomer, err
+}
+
 func getUser(data []byte) (user, error) {
 	u, err := makeUserFromBytes(data)
 	if err != nil {

@@ -17,21 +17,39 @@ func CreateCustomer(customerData []byte, repository CustomerDataHandler) (Custom
 	return customer, err
 }
 
-func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (newCustomer Customer, err error) {
-	var foundCustomer Customer
-	foundCustomer, err = repository.Get(id)
+func UpdateCustomerEmail(id string, customerData []byte, repository CustomerDataHandler) (newCustomer Customer, err error) {
+	foundCustomer, err := repository.Get(id)
 	if err != nil {
-		return
+		return newCustomer, err
 	}
 
-	newCustomer, err = getCustomerToUpdate(foundCustomer, customerData)
-	if err != nil {
-		return
+	if newCustomer, err = getCustomerToUpdateEmail(foundCustomer, customerData); err != nil {
+		return newCustomer, err
 	}
 
 	if err = repository.Replace(newCustomer); err != nil {
 		newCustomer = Customer{}
-		return
+		return newCustomer, err
+	}
+
+	return newCustomer, err
+}
+
+func UpdateCustomer(id string, customerData []byte, repository CustomerDataHandler) (newCustomer Customer, err error) {
+	var foundCustomer Customer
+	foundCustomer, err = repository.Get(id)
+	if err != nil {
+		return newCustomer, err
+	}
+
+	newCustomer, err = getCustomerToUpdate(foundCustomer, customerData)
+	if err != nil {
+		return newCustomer, err
+	}
+
+	if err = repository.Replace(newCustomer); err != nil {
+		newCustomer = Customer{}
+		return newCustomer, err
 	}
 
 	return newCustomer, err
@@ -81,6 +99,5 @@ func FindCustomer(id string, repository CustomerDataHandler) (Customer, error) {
 }
 
 func FindCustomers(params []SearchParameter, page int64, quantity int64, repository CustomerDataHandler) (res []Customer, total int64, err error) {
-
 	return repository.GetMany(params, page, quantity)
 }

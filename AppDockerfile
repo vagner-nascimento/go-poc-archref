@@ -32,5 +32,10 @@ RUN mkdir /app
 # Copy binary from build to app folder
 RUN cp main /app
 
+# Copy config files
+RUN cp -rf config/ /app
+
 # Remove all files on /build
 RUN rm -rf /build
+
+WORKDIR /app

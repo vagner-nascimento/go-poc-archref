@@ -3,9 +3,9 @@ package data
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"github.com/vagner-nascimento/go-poc-archref/config"
 	"sync"
 
-	"github.com/vagner-nascimento/go-poc-archref/environment"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
 
@@ -30,22 +30,12 @@ type (
 		Immediate bool
 		Args      amqp.Table
 	}
-	amqpConfigTp struct {
-		once       sync.Once
-		localConn  string
-		dockerConn string
-	}
 )
 
 var (
 	singletonAmqp struct {
 		amqoConn    *amqp.Connection
 		amqpChannel *amqp.Channel
-	}
-	// TODO: Amqp - realise how put connection infos it on app config
-	amqpConfig = amqpConfigTp{
-		localConn:  "amqp://guest:guest@localhost:5672",
-		dockerConn: "amqp://guest:guest@go-rabbit-mq:5672",
 	}
 )
 
@@ -203,20 +193,15 @@ func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
 	}, nil
 }
 
+var amqpOnce sync.Once
+
 func amqpConnect() (*amqp.Channel, error) {
 	var err error
-	amqpConfig.once.Do(func() {
-		if environment.GetEnv() == "docker" {
-			singletonAmqp.amqoConn, err = amqp.Dial(amqpConfig.dockerConn)
-		} else {
-			singletonAmqp.amqoConn, err = amqp.Dial(amqpConfig.localConn)
-		}
-
-		if err == nil {
+	amqpOnce.Do(func() {
+		if singletonAmqp.amqoConn, err = amqp.Dial(config.Get().Data.Amqp.ConnStr); err == nil {
 			infra.LogInfo("successfully connected into AMQP server")
 
-			singletonAmqp.amqpChannel, err = singletonAmqp.amqoConn.Channel()
-			if err == nil {
+			if singletonAmqp.amqpChannel, err = singletonAmqp.amqoConn.Channel(); err == nil {
 				infra.LogInfo("successfully created AMQP channel")
 			}
 		}

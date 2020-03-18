@@ -3,6 +3,7 @@ package presentation
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/vagner-nascimento/go-poc-archref/config"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/vagner-nascimento/go-poc-archref/environment"
 	"github.com/vagner-nascimento/go-poc-archref/src/app"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/repository"
 	"github.com/vagner-nascimento/go-poc-archref/src/tool"
@@ -20,11 +20,16 @@ func newCustomersRoutes() *chi.Mux {
 	router := chi.NewRouter()
 	router.Post("/", postCustomer)
 	router.Put("/{id}", putCustomer)
-	router.Patch("/{id}", patchCustomer)
+	router.Patch("/{id}/email", patchCustomerEmail)
 	router.Delete("/{id}", deleteCustomer)
 	router.Get("/{id}", getCustomer)
 	router.Get("/", getCustomersPaginated)
 	return router
+}
+
+func getIdFromPath(path string, skip int) string {
+	params := strings.Split(path, "/")
+	return params[len(params)-skip]
 }
 
 // TODO: validate params (path, query, body, etc)
@@ -47,14 +52,12 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func putCustomer(w http.ResponseWriter, r *http.Request) {
-	params := strings.Split(r.URL.Path, "/")
-	id := params[len(params)-1]
+	id := getIdFromPath(r.URL.Path, 1)
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		render.JSON(w, r, castError(err, "http request", "bytes"))
 		return
 	}
-
 	if customer, err := app.UpdateCustomer(id, bytes, repository.NewCustomerRepository()); err != nil {
 		render.JSON(w, r, err)
 		return
@@ -64,8 +67,19 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: implement patch
-func patchCustomer(w http.ResponseWriter, r *http.Request) {
-
+func patchCustomerEmail(w http.ResponseWriter, r *http.Request) {
+	id := getIdFromPath(r.URL.Path, 2)
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		render.JSON(w, r, castError(err, "http request", "bytes"))
+		return
+	}
+	if customer, err := app.UpdateCustomerEmail(id, bytes, repository.NewCustomerRepository()); err != nil {
+		render.JSON(w, r, err)
+		return
+	} else {
+		render.JSON(w, r, customer)
+	}
 }
 
 // TODO: implement DELETE CUSTOMER
@@ -106,7 +120,6 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			param := query.Get(key)
-
 			var paramValues []interface{}
 			if tool.StringIsArray(param) {
 				dec := json.NewDecoder(strings.NewReader(param))
@@ -126,7 +139,7 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if pageSize == 0 {
-		pageSize = environment.MaxPaginatedSearch
+		pageSize = config.Get().Data.NoSql.Mongo.MaxPaginatedSearch
 	}
 
 	customers, total, err := app.FindCustomers(params, page, pageSize, repository.NewCustomerRepository())

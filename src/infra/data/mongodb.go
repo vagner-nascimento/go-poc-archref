@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
+	"github.com/vagner-nascimento/go-poc-archref/config"
 	"go.mongodb.org/mongo-driver/bson"
 	"strings"
 	"sync"
@@ -11,30 +12,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/vagner-nascimento/go-poc-archref/environment"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
-
-type mongoConfigTp struct {
-	clientTimeout time.Duration
-	insertTimeout time.Duration
-	findTimeout   time.Duration
-	localConn     string
-	dockerConn    string
-	once          sync.Once
-}
 
 var (
 	singletonMongo struct {
 		client *mongo.Client
 	}
-	mongoConfig = mongoConfigTp{
-		clientTimeout: 15,
-		insertTimeout: 5,
-		findTimeout:   8,
-		localConn:     "mongodb://admin:admin@localhost:27017",
-		dockerConn:    "mongodb://admin:admin@go-mongodb:27017",
-	} // TODO: Mongo - realise how put connection into app config
 )
 
 type MongoDb struct {
@@ -42,8 +26,7 @@ type MongoDb struct {
 }
 
 func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
-
-	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.insertTimeout*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), config.Get().Data.NoSql.Mongo.InsertTimeout*time.Second)
 	if _, err := o.collection.InsertOne(ctx, entity); err != nil {
 		return nil, execError(err, "insertOne", "mongodb server")
 	}
@@ -52,7 +35,7 @@ func (o *MongoDb) Insert(entity interface{}) (interface{}, error) {
 }
 
 func (o *MongoDb) FindOne(filters bson.D) ([]byte, error) {
-	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), config.Get().Data.NoSql.Mongo.FindTimeout*time.Second)
 	raw, err := o.collection.FindOne(ctx, filters).DecodeBytes()
 	if err != nil {
 		if strings.Contains(err.Error(), "no documents in result") {
@@ -85,7 +68,8 @@ func (o *MongoDb) Find(filters bson.D, maxDocs int64, page int64, results chan i
 	}
 
 	var err error
-	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
+
+	ctx, _ := context.WithTimeout(context.Background(), config.Get().Data.NoSql.Mongo.FindTimeout*time.Second)
 	*total, err = o.collection.CountDocuments(ctx, filters)
 	if shouldExit(err) {
 		return
@@ -102,7 +86,6 @@ func (o *MongoDb) Find(filters bson.D, maxDocs int64, page int64, results chan i
 		if shouldExit(err) {
 			break
 		}
-
 		results <- item
 	}
 
@@ -114,7 +97,7 @@ func (o *MongoDb) Find(filters bson.D, maxDocs int64, page int64, results chan i
 }
 
 func (o *MongoDb) ReplaceOne(filter bson.M, newData interface{}) (int64, error) {
-	ctx, _ := context.WithTimeout(context.Background(), mongoConfig.findTimeout*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), config.Get().Data.NoSql.Mongo.FindTimeout*time.Second)
 
 	res, err := o.collection.ReplaceOne(ctx, filter, newData)
 	if err != nil {
@@ -134,22 +117,16 @@ func NewMongoDb(collectionName string) (*MongoDb, error) {
 	}, nil
 }
 
-func mongoDbConnect() error {
-	var err error
-	mongoConfig.once.Do(func() {
-		var cliOpts *options.ClientOptions
-		if environment.GetEnv() == "docker" {
-			cliOpts = options.Client().ApplyURI(mongoConfig.dockerConn)
-		} else {
-			cliOpts = options.Client().ApplyURI(mongoConfig.localConn)
-		}
+var mongoOnce sync.Once
 
-		ctx, _ := context.WithTimeout(context.Background(), mongoConfig.clientTimeout*time.Second)
+func mongoDbConnect() (err error) {
+	mongoOnce.Do(func() {
+		ctx, _ := context.WithTimeout(context.Background(), config.Get().Data.NoSql.Mongo.ClientTimeOut*time.Second)
+		cliOpts := options.Client().ApplyURI(config.Get().Data.NoSql.Mongo.ConnStr)
 		singletonMongo.client, err = mongo.Connect(ctx, cliOpts)
 		if err != nil {
 			return
 		}
-
 		if err = singletonMongo.client.Ping(context.TODO(), nil); err == nil {
 			infra.LogInfo("successfully connected into MongoDb server")
 		}
@@ -159,10 +136,5 @@ func mongoDbConnect() error {
 		return connectionError(err, "mongodb server")
 	}
 
-	return nil
+	return err
 }
-
-// TODO: Realise how to set mongo db indexes and make customers email unique
-// func SetMongoDbIndexes() error {
-// 	return nil
-// }
