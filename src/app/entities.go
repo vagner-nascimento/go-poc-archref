@@ -1,14 +1,10 @@
 package app
 
 import (
+	"errors"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
+	"strings"
 )
-
-// TODO: think in better way to pass parameters to the queries
-type SearchParameter struct {
-	Field  string
-	Values []interface{}
-}
 
 func mapUserToCustomer(u model.User, c model.Customer) model.Customer {
 	return model.Customer{
@@ -32,4 +28,21 @@ func mapCustomerToUpdate(oldCustomer model.Customer, newCustomer model.Customer)
 		BirthMonth: newCustomer.BirthMonth,
 		UserId:     newCustomer.UserId,
 	}
+}
+
+func validateUser(u model.User) error {
+	var msgs []string
+	if u.Id == "" {
+		msgs = append(msgs, "model.User id is required")
+	}
+	if u.Name == "" {
+		msgs = append(msgs, "model.User name is required")
+	}
+	if u.EMail == "" {
+		msgs = append(msgs, "model.User email is required")
+	}
+	if len(msgs) > 0 {
+		return errors.New(strings.Join(msgs, ","))
+	}
+	return nil
 }

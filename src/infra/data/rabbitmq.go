@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"github.com/vagner-nascimento/go-poc-archref/config"
-	"sync"
-
 	"github.com/vagner-nascimento/go-poc-archref/src/infra"
+	"strings"
+	"sync"
 )
 
 type (
@@ -33,20 +33,19 @@ type (
 	}
 )
 
-var (
-	singletonAmqp struct {
-		amqoConn    *amqp.Connection
-		amqpChannel *amqp.Channel
-	}
-)
+var singletonAmqp struct {
+	amqoConn    *amqp.Connection
+	amqpChannel *amqp.Channel
+}
 
-type AmqPublisher struct {
+// TODO: Make interfaces of data to interact with repository
+type RabbitPublisher struct {
 	queue   queueInfo
 	message messageInfo
 }
 
-func (o *AmqPublisher) Publish(data []byte) error {
-	ch, err := amqpConnect()
+func (o *RabbitPublisher) Publish(data []byte) error {
+	ch, err := amqpChannel()
 	if err != nil {
 		return err
 	}
@@ -82,8 +81,8 @@ func (o *AmqPublisher) Publish(data []byte) error {
 	return nil
 }
 
-func NewAmqpPublisher(queueName string) (*AmqPublisher, error) {
-	return &AmqPublisher{
+func NewRabbitPublisher(queueName string) (*RabbitPublisher, error) {
+	return &RabbitPublisher{
 		queue: queueInfo{
 			Name:       queueName,
 			Durable:    false,
@@ -101,14 +100,14 @@ func NewAmqpPublisher(queueName string) (*AmqPublisher, error) {
 	}, nil
 }
 
-type AmqSubscriber struct {
+type RabbitSubscriber struct {
 	queue   queueInfo
 	message messageInfo
 	handler func([]byte)
 }
 
-func NewAmqpSubscriber(queueName string, consumerName string, handler func([]byte)) AmqSubscriber {
-	return AmqSubscriber{
+func NewRabbitSubscriber(queueName string, consumerName string, handler func([]byte)) RabbitSubscriber {
+	return RabbitSubscriber{
 		queue: queueInfo{
 			Name:         queueName,
 			Durable:      false,
@@ -127,47 +126,39 @@ func NewAmqpSubscriber(queueName string, consumerName string, handler func([]byt
 	}
 }
 
-func SubscribeConsumers(subscribers []AmqSubscriber) error {
-	ch, err := amqpConnect()
+func SubscribeRabbitConsumers(subscribers []RabbitSubscriber) error {
+	ch, err := amqpChannel()
 	if err != nil {
 		return err
 	}
 
-	var qNames string
+	var qNames []string
 	for i := 0; i < len(subscribers); i = i + 1 {
 		c := subscribers[i]
-		handler, err := messageHandlers(ch, c)
+		processMsgs, err := processMessages(ch, c)
 		if err != nil {
-			continue
+			continue // TODO: realise how to properly handler this kind of error
 		}
-
-		go handler()
-
-		if qNames == "" {
-			qNames = qNames + c.queue.Name
-		} else {
-			qNames = fmt.Sprintf("%s, %s", qNames, c.queue.Name)
-		}
+		go processMsgs()
+		qNames = append(qNames, c.queue.Name)
 	}
 
-	if qNames != "" {
-		infra.LogInfo("listening to the queues: " + qNames)
-
-		keepListening := make(chan bool)
-		<-keepListening
+	if len(qNames) <= 0 {
+		return errors.New("none queue to be listened")
 	}
 
-	return errors.New("none queue can be listened")
+	infra.LogInfo("listening to the queues: " + strings.Join(qNames, ","))
+	return nil
 }
 
-func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
+func processMessages(ch *amqp.Channel, sub RabbitSubscriber) (func(), error) {
 	q, err := ch.QueueDeclare(
 		sub.queue.Name,
 		sub.queue.Durable,
 		sub.queue.DeleteUnused,
 		sub.queue.Exclusive,
 		sub.queue.NoWait,
-		sub.queue.Args, // Queue Table Args
+		sub.queue.Args,
 	)
 	if err != nil {
 		return nil, err
@@ -188,7 +179,7 @@ func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
 
 	return func() {
 		for msg := range msgs {
-			infra.LogInfo("message received, body: ", string(msg.Body))
+			infra.LogInfo(fmt.Sprintf("message received from %s. body:\r\n %s", q.Name, string(msg.Body)))
 			sub.handler(msg.Body)
 		}
 	}, nil
@@ -196,7 +187,7 @@ func messageHandlers(ch *amqp.Channel, sub AmqSubscriber) (func(), error) {
 
 var amqpOnce sync.Once
 
-func amqpConnect() (*amqp.Channel, error) {
+func amqpChannel() (*amqp.Channel, error) {
 	var err error
 	amqpOnce.Do(func() {
 		if singletonAmqp.amqoConn, err = amqp.Dial(config.Get().Data.Amqp.ConnStr); err == nil {
@@ -207,6 +198,10 @@ func amqpConnect() (*amqp.Channel, error) {
 			}
 		}
 	})
+
+	if singletonAmqp.amqpChannel == nil && err == nil {
+		err = errors.New("cannot open channel into amqp sever")
+	}
 
 	return singletonAmqp.amqpChannel, err
 }

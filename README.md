@@ -26,13 +26,7 @@ POC to define an architecture reference in Golang
         "birthMonth": 1,  
         "eMail": "gerald@witcher-mail.com",  
  "userId": "026616e2-063a-408b-aa45-99dc671081db"  
- }
-  - **HTTP/PATCH**: http://localhost:3000/api/v1/customers/{id}/email
-     - body (json):  
-       {  
-        "eMail": "gerald@witcher-mail.com"  
- }
-  
+ }  
  - **HTTP/GET** (by id): http://localhost:3000/api/v1/customers/{id}
  - **HTTP/GET** (by params): http://localhost:3000/api/v1/customers?p=val&p1=val1&valArr=["it1", "it2"]
     - params can be any Customer attributes. If you want to search in a range of some value, send as array, like above
@@ -50,7 +44,7 @@ POC to define an architecture reference in Golang
     - on **Get messages** menu increase **Messages** field to 50 (or more) and click on **Get Message(s)**
 
 # next steps
-- Develop delete http endpoint
+- Develop delete and patch http endpoint
 - Layout restructure
 - Http errors handler
 - App errors handler

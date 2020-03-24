@@ -2,22 +2,22 @@ package repository
 
 import (
 	"errors"
+	"github.com/vagner-nascimento/go-poc-archref/src/app"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"strconv"
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/vagner-nascimento/go-poc-archref/src/app"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/data"
 )
 
-type CustomerRepository struct {
+type customerRepository struct {
 }
 
 const customerCollection = "customers"
 
-func (o *CustomerRepository) Save(customer *model.Customer) error {
+func (o *customerRepository) Save(customer *model.Customer) error {
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
 		return err
@@ -28,11 +28,11 @@ func (o *CustomerRepository) Save(customer *model.Customer) error {
 		return err
 	}
 
-	go publishCustomer(*customer)
+	go publishCustomer(*customer) // TODO: remove it from here
 	return nil
 }
 
-func (o *CustomerRepository) Get(id string) (model.Customer, error) {
+func (o *customerRepository) Get(id string) (model.Customer, error) {
 	var customer model.Customer
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
@@ -52,7 +52,7 @@ func (o *CustomerRepository) Get(id string) (model.Customer, error) {
 	return customer, nil
 }
 
-func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, quantity int64) (customers []model.Customer, total int64, err error) {
+func (o *customerRepository) GetMany(params []model.SearchParameter, page int64, quantity int64) (customers []model.Customer, total int64, err error) {
 	var db *data.MongoDb
 	db, err = data.NewMongoDb(customerCollection)
 	if err != nil {
@@ -83,7 +83,7 @@ func (o *CustomerRepository) GetMany(params []app.SearchParameter, page int64, q
 	return customers, total, err
 }
 
-func (o *CustomerRepository) Replace(customer model.Customer) error {
+func (o *customerRepository) Update(customer model.Customer) error {
 	db, err := data.NewMongoDb(customerCollection)
 	if err != nil {
 		return err
@@ -103,12 +103,12 @@ func (o *CustomerRepository) Replace(customer model.Customer) error {
 	return nil
 }
 
-func NewCustomerRepository() *CustomerRepository {
-	return &CustomerRepository{}
+func NewCustomerRepository() app.CustomerDataHandler {
+	return &customerRepository{}
 }
 
 // TODO: think in a better place form these 2 funcs:
-func getBsonFilters(params []app.SearchParameter) bson.D {
+func getBsonFilters(params []model.SearchParameter) bson.D {
 	convertValue := func(val interface{}) (res interface{}) {
 		if res, err := strconv.ParseInt(val.(string), 0, 64); err == nil {
 			return res
@@ -129,7 +129,7 @@ func getBsonFilters(params []app.SearchParameter) bson.D {
 		return res
 	}
 
-	getBsonD := func(param app.SearchParameter) bson.D {
+	getBsonD := func(param model.SearchParameter) bson.D {
 		bsonD := bson.D{{}}
 		if len(param.Values) > 0 {
 			if len(param.Values) == 1 {
@@ -157,6 +157,7 @@ func getBsonFilters(params []app.SearchParameter) bson.D {
 
 	return filters
 }
+
 func unmarshalCustomer(data []byte) (model.Customer, error) {
 	var customer model.Customer
 	err := bson.Unmarshal(data, &customer)

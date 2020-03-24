@@ -42,6 +42,7 @@ func StartHttpServer() error {
 		return err
 	}
 
-	go http.ListenAndServe(fmt.Sprintf(":%d", config.Get().Presentation.Web.Port), router)
-	return nil
+	port := config.Get().Presentation.Web.Port
+	infra.LogInfo(fmt.Sprintf("http server listening at port: %d", port))
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 }

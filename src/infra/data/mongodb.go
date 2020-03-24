@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vagner-nascimento/go-poc-archref/config"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 	"go.mongodb.org/mongo-driver/bson"
 	"strings"
 	"sync"
@@ -12,8 +13,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"github.com/vagner-nascimento/go-poc-archref/src/infra"
 )
 
 var (
@@ -22,6 +21,7 @@ var (
 	}
 )
 
+// TODO: Make interfaces of data to interact with repository
 type MongoDb struct {
 	collection *mongo.Collection
 }
@@ -112,6 +112,7 @@ func NewMongoDb(collectionName string) (*MongoDb, error) {
 		return nil, err
 	}
 
+	// TODO: test if singleton  will work with more collections
 	return &MongoDb{
 		collection: singletonMongo.client.Database("golang").Collection(collectionName),
 	}, nil

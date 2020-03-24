@@ -17,5 +17,15 @@
     "web": {
       "port": 3000
     }
+  },
+  "integration": {
+    "amqp": {
+      "subs": {
+        "user": {
+          "topic": "q-user",
+          "consumer": "poc-golang"
+        }
+      }
+    }
   }
 }

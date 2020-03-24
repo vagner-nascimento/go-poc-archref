@@ -39,9 +39,27 @@ type PresentationConfig struct {
 	Web PresentationWebConfig `json:"web"`
 }
 
+type UserSubConfig struct {
+	Topic    string `json:"topic"`
+	Consumer string `json:"consumer"`
+}
+
+type SubsConfig struct {
+	User UserSubConfig `json:"user"`
+}
+
+type AmqIntegrationConfig struct {
+	Subs SubsConfig `json:"subs"`
+}
+
+type IntegrationConfig struct {
+	Amqp AmqIntegrationConfig `json:"amqp"`
+}
+
 type Config struct {
 	Data         DataConfig         `json:"data"`
 	Presentation PresentationConfig `json:"presentation"`
+	Integration  IntegrationConfig  `json:"integration"`
 }
 
 var config *Config

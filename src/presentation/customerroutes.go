@@ -3,6 +3,8 @@ package presentation
 import (
 	"encoding/json"
 	"github.com/vagner-nascimento/go-poc-archref/config"
+	"github.com/vagner-nascimento/go-poc-archref/src/model"
+	"github.com/vagner-nascimento/go-poc-archref/src/provider"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -10,8 +12,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/vagner-nascimento/go-poc-archref/src/app"
-	"github.com/vagner-nascimento/go-poc-archref/src/infra/repository"
 	"github.com/vagner-nascimento/go-poc-archref/src/tool"
 )
 
@@ -19,8 +19,8 @@ func newCustomersRoutes() *chi.Mux {
 	router := chi.NewRouter()
 	router.Post("/", postCustomer)
 	router.Put("/{id}", putCustomer)
-	router.Patch("/{id}/email", patchCustomerEmail)
-	router.Delete("/{id}", deleteCustomer)
+	//router.Patch("/{id}/email", patchCustomer)
+	//router.Delete("/{id}", deleteCustomer)
 	router.Get("/{id}", getCustomer)
 	router.Get("/", getCustomersPaginated)
 	return router
@@ -42,7 +42,14 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if customer, err := app.CreateCustomer(bytes, repository.NewCustomerRepository()); err != nil {
+	customer, err := model.NewCustomerFromJsonBytes(bytes)
+	if err != nil {
+		render.JSON(w, r, err)
+		return
+	}
+
+	customerUc := provider.CustomerUseCase()
+	if customerUc.Create(&customer); err != nil {
 		render.JSON(w, r, err)
 		return
 	} else {
@@ -57,7 +64,15 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, err)
 		return
 	}
-	if customer, err := app.UpdateCustomer(id, bytes, repository.NewCustomerRepository()); err != nil {
+
+	customer, err := model.NewCustomerFromJsonBytes(bytes)
+	if err != nil {
+		render.JSON(w, r, err)
+		return
+	}
+
+	customerUs := provider.CustomerUseCase()
+	if customer, err := customerUs.Update(id, customer); err != nil {
 		render.JSON(w, r, err)
 		return
 	} else {
@@ -66,19 +81,8 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: implement patch
-func patchCustomerEmail(w http.ResponseWriter, r *http.Request) {
-	id := getIdFromPath(r.URL.Path, 2)
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		render.JSON(w, r, err)
-		return
-	}
-	if customer, err := app.UpdateCustomerEmail(id, bytes, repository.NewCustomerRepository()); err != nil {
-		render.JSON(w, r, err)
-		return
-	} else {
-		render.JSON(w, r, customer)
-	}
+func patchCustomer(w http.ResponseWriter, r *http.Request) {
+
 }
 
 // TODO: implement DELETE CUSTOMER
@@ -87,7 +91,8 @@ func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCustomer(w http.ResponseWriter, r *http.Request) {
-	if customer, err := app.FindCustomer(chi.URLParam(r, "id"), repository.NewCustomerRepository()); err != nil {
+	customerUs := provider.CustomerUseCase()
+	if customer, err := customerUs.Find(chi.URLParam(r, "id")); err != nil {
 		render.JSON(w, r, err)
 		return
 	} else {
@@ -99,7 +104,7 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	var (
 		err      error
-		params   []app.SearchParameter
+		params   []model.SearchParameter
 		page     int64
 		pageSize int64
 	)
@@ -130,7 +135,7 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 				paramValues = append(paramValues, strings.Replace(param, "\"", "", -1))
 			}
 
-			params = append(params, app.SearchParameter{
+			params = append(params, model.SearchParameter{
 				Field:  key,
 				Values: paramValues,
 			})
@@ -141,8 +146,8 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 		pageSize = config.Get().Data.NoSql.Mongo.MaxPaginatedSearch
 	}
 
-	customers, total, err := app.FindCustomers(params, page, pageSize, repository.NewCustomerRepository())
-	if err != nil {
+	customerUs := provider.CustomerUseCase()
+	if customers, total, err := customerUs.List(params, page, pageSize); err != nil {
 		render.JSON(w, r, err)
 		return
 	} else {

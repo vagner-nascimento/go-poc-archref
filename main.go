@@ -1,18 +1,18 @@
 package main
 
-import (
-	"github.com/vagner-nascimento/go-poc-archref/src/infra"
-)
+import "github.com/vagner-nascimento/go-poc-archref/src/loader"
+
+func keepRunning() {
+	<-make(chan bool)
+}
 
 func init() {
-	infra.LogInfo("loading configurations")
-	loadConfiguration()
+	if err := loader.LoadApplication(); err != nil {
+		panic(err)
+	}
 }
 
 func main() {
-	infra.LogInfo("loading http presentation")
-	loadHttpPresentation()
-	infra.LogInfo("application is running")
-	infra.LogInfo("loading subscribers")
-	loadSubscribers() // <- subscribers MUST be always the last loaded because it blocks the app to keep listening to the amq channels
+	//TODO: Refactor DATA
+	keepRunning()
 }

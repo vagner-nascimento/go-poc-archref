@@ -13,7 +13,7 @@ func publishCustomer(c interface{}) error {
 		return err
 	}
 
-	pub, err := data.NewAmqpPublisher(customerQueue)
+	pub, err := data.NewRabbitPublisher(customerQueue)
 	if err != nil {
 		return err
 	}
