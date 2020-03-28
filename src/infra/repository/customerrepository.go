@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"github.com/vagner-nascimento/go-poc-archref/config"
 	"github.com/vagner-nascimento/go-poc-archref/src/app"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"strconv"
@@ -13,33 +14,23 @@ import (
 )
 
 type customerRepository struct {
+	db  data.NoSqlHandler
+	pub *customerPublisher
 }
 
-const customerCollection = "customers"
-
 func (o *customerRepository) Save(customer *model.Customer) error {
-	db, err := data.NewMongoDb(customerCollection)
-	if err != nil {
-		return err
-	}
-
 	customer.Id = uuid.New().String()
-	if _, err = db.Insert(customer); err != nil {
+	if _, err := o.db.InsertOne(customer); err != nil {
 		return err
 	}
 
-	go publishCustomer(*customer) // TODO: remove it from here
+	go o.pub.publish(*customer)
 	return nil
 }
 
 func (o *customerRepository) Get(id string) (model.Customer, error) {
 	var customer model.Customer
-	db, err := data.NewMongoDb(customerCollection)
-	if err != nil {
-		return customer, err
-	}
-
-	result, err := db.FindOne(bson.D{{"id", id}})
+	result, err := o.db.FindOne(id)
 	if err != nil || result == nil {
 		return customer, err
 	}
@@ -53,18 +44,12 @@ func (o *customerRepository) Get(id string) (model.Customer, error) {
 }
 
 func (o *customerRepository) GetMany(params []model.SearchParameter, page int64, quantity int64) (customers []model.Customer, total int64, err error) {
-	var db *data.MongoDb
-	db, err = data.NewMongoDb(customerCollection)
-	if err != nil {
-		return nil, 0, err
-	}
-
 	bsonFilters := getBsonFilters(params)
 	results := make(chan interface{}, 50)
 	if page > 0 {
 		page = page - 1
 	}
-	go db.Find(bsonFilters, quantity, page, results, &total)
+	go o.db.Find(bsonFilters, quantity, page, results, &total)
 
 	for result := range results {
 		switch val := result.(type) {
@@ -76,7 +61,7 @@ func (o *customerRepository) GetMany(params []model.SearchParameter, page int64,
 			}
 			customers = append(customers, customer)
 		case error:
-			return nil, 0, err // TODO: handle errors
+			return nil, 0, err
 		}
 	}
 
@@ -84,27 +69,29 @@ func (o *customerRepository) GetMany(params []model.SearchParameter, page int64,
 }
 
 func (o *customerRepository) Update(customer model.Customer) error {
-	db, err := data.NewMongoDb(customerCollection)
+	replaceCount, err := o.db.ReplaceOne(bson.M{"id": customer.Id}, customer)
 	if err != nil {
 		return err
 	}
-
-	replaceCount, err := db.ReplaceOne(bson.M{"id": customer.Id}, customer)
-	if err != nil {
-		return err
-	}
-
 	if replaceCount < 1 {
 		return errors.New("none Customer was replaced")
 	}
 
-	go publishCustomer(customer)
-
+	go o.pub.publish(customer)
 	return nil
 }
 
-func NewCustomerRepository() app.CustomerDataHandler {
-	return &customerRepository{}
+func NewCustomerRepository() (noSqlDH app.CustomerDataHandler, err error) {
+	if db, err := data.NewNoSqlDb(config.Get().Data.NoSql.Collections.Customer); err == nil {
+		if pub, err := newCustomerPublisher(); err == nil {
+			noSqlDH = &customerRepository{
+				db:  db,
+				pub: pub,
+			}
+		}
+	}
+
+	return noSqlDH, nil
 }
 
 // TODO: think in a better place form these 2 funcs:

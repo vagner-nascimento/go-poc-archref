@@ -32,7 +32,7 @@ func getIdFromPath(path string, skip int) string {
 }
 
 // TODO: validate params (path, query, body, etc)
-// TODO: improve httpErrors
+// TODO: improve http error handler
 // TODO: realise how to send an safe error into response
 // TODO: clean duplicate codes
 func postCustomer(w http.ResponseWriter, r *http.Request) {
@@ -42,23 +42,23 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	customer, err := model.NewCustomerFromJsonBytes(bytes)
+	customer, err := model.NewCustomerFromJsonBytes(bytes) //If int(and i guess that other number too) starts with zero returns error
 	if err != nil {
 		render.JSON(w, r, err)
 		return
 	}
-
-	customerUc := provider.CustomerUseCase()
-	if customerUc.Create(&customer); err != nil {
-		render.JSON(w, r, err)
-		return
+	if customerUc, err := provider.CustomerUseCase(); err == nil {
+		if err = customerUc.Create(&customer); err != nil {
+			render.JSON(w, r, err)
+		} else {
+			render.JSON(w, r, customer)
+		}
 	} else {
-		render.JSON(w, r, customer)
+		render.JSON(w, r, err)
 	}
 }
 
 func putCustomer(w http.ResponseWriter, r *http.Request) {
-	id := getIdFromPath(r.URL.Path, 1)
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		render.JSON(w, r, err)
@@ -70,13 +70,16 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, err)
 		return
 	}
-
-	customerUs := provider.CustomerUseCase()
-	if customer, err := customerUs.Update(id, customer); err != nil {
-		render.JSON(w, r, err)
-		return
+	if customerUc, err := provider.CustomerUseCase(); err == nil {
+		id := getIdFromPath(r.URL.Path, 1)
+		if customer, err := customerUc.Update(id, customer); err != nil {
+			render.JSON(w, r, err)
+			return
+		} else {
+			render.JSON(w, r, customer)
+		}
 	} else {
-		render.JSON(w, r, customer)
+		render.JSON(w, r, err)
 	}
 }
 
@@ -91,13 +94,18 @@ func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCustomer(w http.ResponseWriter, r *http.Request) {
-	customerUs := provider.CustomerUseCase()
-	if customer, err := customerUs.Find(chi.URLParam(r, "id")); err != nil {
-		render.JSON(w, r, err)
-		return
+	if customerUc, err := provider.CustomerUseCase(); err == nil {
+		id := getIdFromPath(r.URL.Path, 1)
+		if customer, err := customerUc.Find(id); err == nil {
+			render.JSON(w, r, customer)
+			return
+		} else {
+			render.JSON(w, r, err)
+		}
 	} else {
-		render.JSON(w, r, customer)
+		render.JSON(w, r, err)
 	}
+
 }
 
 func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
@@ -146,11 +154,14 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 		pageSize = config.Get().Data.NoSql.Mongo.MaxPaginatedSearch
 	}
 
-	customerUs := provider.CustomerUseCase()
-	if customers, total, err := customerUs.List(params, page, pageSize); err != nil {
-		render.JSON(w, r, err)
-		return
+	if customerUs, err := provider.CustomerUseCase(); err == nil {
+		if customers, total, err := customerUs.List(params, page, pageSize); err != nil {
+			render.JSON(w, r, err)
+			return
+		} else {
+			render.JSON(w, r, newPaginatedResponse(customers, page, len(customers), total))
+		}
 	} else {
-		render.JSON(w, r, newPaginatedResponse(customers, page, len(customers), total))
+		render.JSON(w, r, err)
 	}
 }

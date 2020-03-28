@@ -16,16 +16,20 @@ var once struct {
 	amqSub     sync.Once
 }
 
-func CustomerUseCase() app.CustomerUseCase {
+func CustomerUseCase() (app.CustomerUseCase, error) {
+	var err error
 	once.customerUs.Do(func() {
-		resources.customerUseCase = app.NewCustomerUseCase(repository.NewCustomerRepository())
+		if repo, err := repository.NewCustomerRepository(); err == nil {
+			resources.customerUseCase = app.NewCustomerUseCase(repo)
+		}
 	})
-	return resources.customerUseCase
+	return resources.customerUseCase, err
 }
 
-func AmqpSubscription() repository.AmqpSubscriptionHandler {
+func AmqpSubscription() (repository.AmqpSubscriptionHandler, error) {
+	var err error
 	once.amqSub.Do(func() {
-		resources.amqSub = repository.NewAmqpSubscription()
+		resources.amqSub, err = repository.NewAmqpSubscription()
 	})
-	return resources.amqSub
+	return resources.amqSub, err
 }

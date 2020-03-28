@@ -2,6 +2,7 @@ package infra
 
 import "fmt"
 
+// TODO: make a better logger
 func LogInfo(msgs ...string) {
 	fmt.Println(msgs)
 }

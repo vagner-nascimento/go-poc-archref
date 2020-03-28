@@ -16,10 +16,16 @@ type MongoDataConfig struct {
 	InsertTimeout      time.Duration `json:"insertTimeout"`
 	FindTimeout        time.Duration `json:"findTimeout"`
 	MaxPaginatedSearch int64         `json:"maxPaginatedSearch"`
+	Database           string        `json:"database"`
+}
+
+type CollectionsConfig struct {
+	Customer string `json:"customer"`
 }
 
 type NoSqlDataConfig struct {
-	Mongo MongoDataConfig `json:"mongo"`
+	Mongo       MongoDataConfig   `json:"mongo"`
+	Collections CollectionsConfig `json:"collections"`
 }
 
 type AmqpDataConfig struct {
@@ -39,17 +45,22 @@ type PresentationConfig struct {
 	Web PresentationWebConfig `json:"web"`
 }
 
-type UserSubConfig struct {
+type TopicConfig struct {
 	Topic    string `json:"topic"`
 	Consumer string `json:"consumer"`
 }
 
 type SubsConfig struct {
-	User UserSubConfig `json:"user"`
+	User TopicConfig `json:"user"`
+}
+
+type PubsConfig struct {
+	Customer TopicConfig `json:"customer"`
 }
 
 type AmqIntegrationConfig struct {
 	Subs SubsConfig `json:"subs"`
+	Pubs PubsConfig `json:"pubs"`
 }
 
 type IntegrationConfig struct {

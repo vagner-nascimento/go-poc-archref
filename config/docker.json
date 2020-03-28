@@ -6,7 +6,11 @@
         "clientTimeOut": 15,
         "insertTimeout": 5,
         "findTimeout": 8,
-        "maxPaginatedSearch": 100
+        "maxPaginatedSearch": 100,
+        "database": "docker-golang"
+      },
+      "collections": {
+        "customer": "customer"
       }
     },
     "amqp": {
@@ -24,6 +28,11 @@
         "user": {
           "topic": "q-user",
           "consumer": "poc-golang"
+        }
+      },
+      "pubs": {
+        "customer": {
+          "topic": "q-customer"
         }
       }
     }

@@ -9,30 +9,29 @@ type customerUseCase struct {
 	repository CustomerDataHandler
 }
 
+func (us *customerUseCase) getValidCustomer(id string) (customer model.Customer, err error) {
+	if customer, err = us.repository.Get(id); err == nil {
+		err = validateFoundCustomer(customer)
+	}
+	return customer, err
+}
+
 func (us *customerUseCase) Create(customer *model.Customer) error {
 	return us.repository.Save(customer)
 }
 
 func (us *customerUseCase) Find(id string) (customer model.Customer, err error) {
-	if customer, err = us.repository.Get(id); err == nil {
-		if len(customer.Id) <= 0 {
-			customer = model.Customer{}
-			err = errors.New("customer not found")
-		}
-	}
-	return customer, err
+	return us.getValidCustomer(id)
 }
 
 func (us *customerUseCase) Update(id string, customer model.Customer) (newCustomer model.Customer, err error) {
 	var foundCustomer model.Customer
-	foundCustomer, err = us.repository.Get(id)
-	if err != nil {
+	if foundCustomer, err = us.getValidCustomer(id); err != nil {
 		return newCustomer, err
 	}
-
 	newCustomer = mapCustomerToUpdate(foundCustomer, customer)
-	if err == nil {
-		err = us.repository.Update(newCustomer)
+	if err = us.repository.Update(newCustomer); err != nil {
+		newCustomer = model.Customer{}
 	}
 	return newCustomer, err
 }

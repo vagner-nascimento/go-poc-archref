@@ -8,25 +8,28 @@ import (
 	"strings"
 )
 
-func SubscribeConsumers() error {
-	var subs []subscription
-	subs = append(subs, newUserSub()) // TODO: test with more subs
-	amqSub := provider.AmqpSubscription()
+func SubscribeConsumers() (err error) {
+	if amqSub, err := provider.AmqpSubscription(); err == nil {
+		subs := getAllSubs()
+		var subsSuccess []string
+		for _, sub := range subs {
+			err := amqSub.AddSubscriber(sub.getTopic(), sub.getConsumer(), sub.getHandler())
+			if err != nil {
+				infra.LogError("error on subscribe consumer", err)
+			} else {
+				subsSuccess = append(subsSuccess, reflect.TypeOf(sub).Elem().Name())
+			}
+		}
 
-	var subsSuccess []string
-	for _, sub := range subs {
-		err := amqSub.AddSubscriber(sub.getTopic(), sub.getConsumer(), sub.getHandler())
-		if err != nil {
-			infra.LogError("error on subscribe consumer", err)
-		} else {
-			subsSuccess = append(subsSuccess, reflect.TypeOf(sub).Elem().Name())
+		if err = amqSub.SubscribeAll(); err == nil {
+			infra.LogInfo(fmt.Sprintf("successfully subscribed: %s", strings.Join(subsSuccess, ",")))
 		}
 	}
+	return err
+}
 
-	if err := amqSub.SubscribeAll(); err != nil {
-		return err
-	}
+func getAllSubs() (subs []subscription) {
+	subs = append(subs, newUserSub()) // TODO: test with more subs
 
-	infra.LogInfo(fmt.Sprintf("successfully subscribed: %s", strings.Join(subsSuccess, ",")))
-	return nil
+	return subs
 }

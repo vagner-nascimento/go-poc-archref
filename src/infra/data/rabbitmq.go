@@ -38,95 +38,13 @@ var singletonAmqp struct {
 	amqpChannel *amqp.Channel
 }
 
-// TODO: Make interfaces of data to interact with repository
-type RabbitPublisher struct {
-	queue   queueInfo
-	message messageInfo
-}
-
-func (o *RabbitPublisher) Publish(data []byte) error {
-	ch, err := amqpChannel()
-	if err != nil {
-		return err
-	}
-
-	q, err := ch.QueueDeclare(
-		o.queue.Name,
-		o.queue.Durable,
-		o.queue.AutoDelete,
-		o.queue.Exclusive,
-		o.queue.NoWait,
-		o.queue.Args,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	err = ch.Publish(
-		o.message.Exchange,
-		q.Name,
-		o.message.Mandatory,
-		o.message.Immediate,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        data,
-		},
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func NewRabbitPublisher(queueName string) (*RabbitPublisher, error) {
-	return &RabbitPublisher{
-		queue: queueInfo{
-			Name:       queueName,
-			Durable:    false,
-			AutoDelete: false,
-			Exclusive:  false,
-			NoWait:     false,
-			Args:       nil,
-		},
-		message: messageInfo{
-			Exchange:  "",
-			Mandatory: false,
-			Immediate: false,
-			Args:      nil,
-		},
-	}, nil
-}
-
-type RabbitSubscriber struct {
+type rabbitSubscriber struct {
 	queue   queueInfo
 	message messageInfo
 	handler func([]byte)
 }
 
-func NewRabbitSubscriber(queueName string, consumerName string, handler func([]byte)) RabbitSubscriber {
-	return RabbitSubscriber{
-		queue: queueInfo{
-			Name:         queueName,
-			Durable:      false,
-			DeleteUnused: false,
-			Exclusive:    false,
-			NoWait:       false,
-		},
-		message: messageInfo{
-			Consumer:  consumerName,
-			AutoAct:   true,
-			Exclusive: false,
-			Local:     false,
-			NoWait:    false,
-		},
-		handler: handler,
-	}
-}
-
-func SubscribeRabbitConsumers(subscribers []RabbitSubscriber) error {
+func subscribeRabbitConsumers(subscribers []rabbitSubscriber) error {
 	ch, err := amqpChannel()
 	if err != nil {
 		return err
@@ -137,7 +55,8 @@ func SubscribeRabbitConsumers(subscribers []RabbitSubscriber) error {
 		c := subscribers[i]
 		processMsgs, err := processMessages(ch, c)
 		if err != nil {
-			continue // TODO: realise how to properly handler this kind of error
+			infra.LogError(fmt.Sprintf("error on try subbscribe consumer %s", c.message.Consumer), err)
+			continue
 		}
 		go processMsgs()
 		qNames = append(qNames, c.queue.Name)
@@ -151,7 +70,7 @@ func SubscribeRabbitConsumers(subscribers []RabbitSubscriber) error {
 	return nil
 }
 
-func processMessages(ch *amqp.Channel, sub RabbitSubscriber) (func(), error) {
+func processMessages(ch *amqp.Channel, sub rabbitSubscriber) (func(), error) {
 	q, err := ch.QueueDeclare(
 		sub.queue.Name,
 		sub.queue.Durable,
@@ -182,6 +101,130 @@ func processMessages(ch *amqp.Channel, sub RabbitSubscriber) (func(), error) {
 			infra.LogInfo(fmt.Sprintf("message received from %s. body:\r\n %s", q.Name, string(msg.Body)))
 			sub.handler(msg.Body)
 		}
+	}, nil
+}
+
+// -----------> RESTRUCTURING
+type pubDefaultValues struct {
+	queue   queueInfo
+	message messageInfo
+}
+
+type subDefaultValues struct {
+	queue   queueInfo
+	message messageInfo
+}
+
+type rabbitAmqpHandler struct {
+	subscribers []rabbitSubscriber
+	channel     *amqp.Channel
+	pubValues   pubDefaultValues
+}
+
+func (rh *rabbitAmqpHandler) AddSubscriber(topicName string, consumerName string, handler func([]byte)) error {
+	if err := validateSub(topicName, consumerName, handler); err != nil {
+		return err
+	}
+	rh.subscribers = append(rh.subscribers, newRabbitSubscriber(topicName, consumerName, handler))
+	return nil
+}
+
+func (rh *rabbitAmqpHandler) SubscribeAll() (err error) {
+	if len(rh.subscribers) > 0 {
+		err = subscribeRabbitConsumers(rh.subscribers)
+	} else {
+		err = errors.New("there are no subscribers to consume topics")
+	}
+	return err
+}
+
+func (rh *rabbitAmqpHandler) Publish(data []byte, topicName string) error {
+	ch, err := amqpChannel()
+	if err != nil {
+		return err
+	}
+
+	q, err := ch.QueueDeclare(
+		topicName,
+		rh.pubValues.queue.Durable,
+		rh.pubValues.queue.AutoDelete,
+		rh.pubValues.queue.Exclusive,
+		rh.pubValues.queue.NoWait,
+		rh.pubValues.queue.Args,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = ch.Publish(
+		rh.pubValues.message.Exchange,
+		q.Name,
+		rh.pubValues.message.Mandatory,
+		rh.pubValues.message.Immediate,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        data,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateSub(topicName string, consumerName string, messageHandler func(data []byte)) error {
+	if topicName == "" || consumerName == "" || messageHandler == nil {
+		return errors.New(fmt.Sprintf("invalid subscriber's data: topic: %s, consumer: %s, handler is nil: %t",
+			topicName,
+			consumerName,
+			messageHandler == nil))
+	}
+	return nil
+}
+
+func newRabbitSubscriber(queueName string, consumerName string, handler func([]byte)) rabbitSubscriber {
+	return rabbitSubscriber{
+		queue: queueInfo{
+			Name:         queueName,
+			Durable:      false,
+			DeleteUnused: false,
+			Exclusive:    false,
+			NoWait:       false,
+		},
+		message: messageInfo{
+			Consumer:  consumerName,
+			AutoAct:   true,
+			Exclusive: false,
+			Local:     false,
+			NoWait:    false,
+		},
+		handler: handler,
+	}
+}
+
+func NewAmqpHandler() (AmqpHandler, error) {
+	ch, err := amqpChannel()
+	if err != nil {
+		return nil, err
+	}
+	return &rabbitAmqpHandler{
+		channel: ch,
+		pubValues: pubDefaultValues{
+			queue: queueInfo{
+				Durable:    false,
+				AutoDelete: false,
+				Exclusive:  false,
+				NoWait:     false,
+				Args:       nil,
+			},
+			message: messageInfo{
+				Exchange:  "",
+				Mandatory: false,
+				Immediate: false,
+				Args:      nil,
+			},
+		},
 	}, nil
 }
 

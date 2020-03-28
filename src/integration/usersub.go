@@ -32,8 +32,9 @@ func newUserSub() subscription {
 		consumer: userConf.Consumer,
 		handler: func(data []byte) {
 			if user, err := model.NewUserFromJsonBytes(data); err == nil {
-				customerUs := provider.CustomerUseCase()
-				_, err = customerUs.UpdateFromUser(user)
+				if customerUs, err := provider.CustomerUseCase(); err == nil {
+					_, err = customerUs.UpdateFromUser(user)
+				}
 			} else {
 				infra.LogError("error on update a customer", err)
 			}

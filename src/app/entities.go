@@ -46,3 +46,10 @@ func validateUser(u model.User) error {
 	}
 	return nil
 }
+
+func validateFoundCustomer(customer model.Customer) (err error) {
+	if len(customer.Id) <= 0 {
+		err = errors.New("customer not found")
+	}
+	return err
+}
