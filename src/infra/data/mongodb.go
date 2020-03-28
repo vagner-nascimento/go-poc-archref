@@ -46,11 +46,15 @@ func (o *mongoDb) FindOne(id interface{}) ([]byte, error) {
 }
 
 func (o *mongoDb) Find(filters bson.D, maxDocs int64, page int64, results chan interface{}, total *int64) {
-	if maxDocs <= 0 || page < 0 {
+	if page < 0 {
 		results <- errors.New(fmt.Sprintf("invalid parameters, maxDocs: %s, page: %s", maxDocs, page))
 		close(results)
 		return
 	}
+	if maxDocs <= 0 {
+		maxDocs = config.Get().Data.NoSql.Mongo.MaxPaginatedSearch
+	}
+
 	shouldExit := func(err error) bool {
 		if err != nil {
 			results <- err

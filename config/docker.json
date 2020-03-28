@@ -10,7 +10,8 @@
         "database": "docker-golang"
       },
       "collections": {
-        "customer": "customer"
+        "customer": "customer",
+        "supplier": "supplier"
       }
     },
     "amqp": {

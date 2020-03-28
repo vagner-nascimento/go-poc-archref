@@ -52,5 +52,12 @@
       "birthMonth": 7,
       "eMail": "yennefer@sorcerer-rmail.com"
     }
+  ],
+  "suppliers": [
+    {
+      "name": "Wash Clean",
+      "documentNumber": "A468507GB",
+      "creditLimit": 15520.51
+    }
   ]
 }

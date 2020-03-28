@@ -1,18 +1,12 @@
 package presentation
 
 import (
-	"encoding/json"
-	"github.com/vagner-nascimento/go-poc-archref/config"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"github.com/vagner-nascimento/go-poc-archref/src/provider"
 	"io/ioutil"
 	"net/http"
-	"strings"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-
-	"github.com/vagner-nascimento/go-poc-archref/src/tool"
 )
 
 func newCustomersRoutes() *chi.Mux {
@@ -24,11 +18,6 @@ func newCustomersRoutes() *chi.Mux {
 	router.Get("/{id}", getCustomer)
 	router.Get("/", getCustomersPaginated)
 	return router
-}
-
-func getIdFromPath(path string, skip int) string {
-	params := strings.Split(path, "/")
-	return params[len(params)-skip]
 }
 
 // TODO: validate params (path, query, body, etc)
@@ -71,7 +60,7 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if customerUc, err := provider.CustomerUseCase(); err == nil {
-		id := getIdFromPath(r.URL.Path, 1)
+		id := getDataFromPath(r.URL.Path, 1)
 		if customer, err := customerUc.Update(id, customer); err != nil {
 			render.JSON(w, r, err)
 			return
@@ -97,7 +86,7 @@ func patchCustomerAddress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if customerUc, err := provider.CustomerUseCase(); err == nil {
-		id := getIdFromPath(r.URL.Path, 2)
+		id := getDataFromPath(r.URL.Path, 2)
 		if customer, err := customerUc.UpdateAddress(id, address); err != nil {
 			render.JSON(w, r, err)
 			return
@@ -116,7 +105,7 @@ func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 
 func getCustomer(w http.ResponseWriter, r *http.Request) {
 	if customerUc, err := provider.CustomerUseCase(); err == nil {
-		id := getIdFromPath(r.URL.Path, 1)
+		id := getDataFromPath(r.URL.Path, 1)
 		if customer, err := customerUc.Find(id); err == nil {
 			render.JSON(w, r, customer)
 			return
@@ -126,63 +115,19 @@ func getCustomer(w http.ResponseWriter, r *http.Request) {
 	} else {
 		render.JSON(w, r, err)
 	}
-
 }
 
 func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	var (
-		err      error
-		params   []model.SearchParameter
-		page     int64
-		pageSize int64
-	)
-
-	for key := range query {
-		if key == "page" {
-			page, err = tool.SafeParseInt(query.Get(key))
-			if err != nil {
+	if params, page, pageSize, err := getPaginatedParamsFromQuery(r.URL.Query()); err == nil {
+		if customerUs, err := provider.CustomerUseCase(); err == nil {
+			if customers, total, err := customerUs.List(params, page, pageSize); err != nil {
 				render.JSON(w, r, err)
 				return
-			}
-		} else if key == "pageSize" {
-			pageSize, err = tool.SafeParseInt(query.Get(key))
-			if err != nil {
-				render.JSON(w, r, err)
-				return
-			}
-		} else {
-			param := query.Get(key)
-			var paramValues []interface{}
-			if tool.IsStringArray(param) {
-				dec := json.NewDecoder(strings.NewReader(param))
-				if err = dec.Decode(&paramValues); err != nil {
-					render.JSON(w, r, err)
-					return
-				}
 			} else {
-				paramValues = append(paramValues, strings.Replace(param, "\"", "", -1))
+				render.JSON(w, r, newPaginatedResponse(customers, page, len(customers), total))
 			}
-
-			params = append(params, model.SearchParameter{
-				Field:  key,
-				Values: paramValues,
-			})
-		}
-	}
-
-	if pageSize == 0 {
-		pageSize = config.Get().Data.NoSql.Mongo.MaxPaginatedSearch
-	}
-
-	if customerUs, err := provider.CustomerUseCase(); err == nil {
-		if customers, total, err := customerUs.List(params, page, pageSize); err != nil {
-			render.JSON(w, r, err)
-			return
 		} else {
-			render.JSON(w, r, newPaginatedResponse(customers, page, len(customers), total))
+			render.JSON(w, r, err)
 		}
-	} else {
-		render.JSON(w, r, err)
 	}
 }

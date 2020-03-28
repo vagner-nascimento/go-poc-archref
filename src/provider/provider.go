@@ -8,22 +8,34 @@ import (
 
 var resources struct {
 	customerUseCase app.CustomerUseCase
+	supplierUseCase app.SupplierUseCase
 	amqSub          repository.AmqpSubscriptionHandler
 }
 
 var once struct {
-	customerUs sync.Once
+	customerUc sync.Once
 	amqSub     sync.Once
+	providerUc sync.Once
 }
 
 func CustomerUseCase() (app.CustomerUseCase, error) {
 	var err error
-	once.customerUs.Do(func() {
+	once.customerUc.Do(func() {
 		if repo, err := repository.NewCustomerRepository(); err == nil {
 			resources.customerUseCase = app.NewCustomerUseCase(repo)
 		}
 	})
 	return resources.customerUseCase, err
+}
+
+func SupplierUseCase() (app.SupplierUseCase, error) {
+	var err error
+	once.providerUc.Do(func() {
+		if repo, err := repository.NewSupplierRepository(); err == nil {
+			resources.supplierUseCase = app.NewSupplierUseCase(repo)
+		}
+	})
+	return resources.supplierUseCase, err
 }
 
 func AmqpSubscription() (repository.AmqpSubscriptionHandler, error) {

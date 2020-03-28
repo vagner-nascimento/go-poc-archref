@@ -21,6 +21,7 @@ type MongoDataConfig struct {
 
 type CollectionsConfig struct {
 	Customer string `json:"customer"`
+	Supplier string `json:"supplier"`
 }
 
 type NoSqlDataConfig struct {

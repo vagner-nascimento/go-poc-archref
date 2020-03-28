@@ -5,6 +5,15 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 )
 
+type CustomerUseCase interface {
+	Create(customer *model.Customer) error
+	Find(id string) (model.Customer, error)
+	Update(id string, customer model.Customer) (model.Customer, error)
+	UpdateFromUser(user model.User) (model.Customer, error)
+	List(params []model.SearchParameter, page int64, quantity int64) ([]model.Customer, int64, error)
+	UpdateAddress(id string, address model.Address) (model.Customer, error)
+}
+
 type customerUseCase struct {
 	repository CustomerDataHandler
 }
