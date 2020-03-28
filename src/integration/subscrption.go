@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+type subscription interface {
+	getTopic() string
+	getConsumer() string
+	getHandler() func([]byte)
+}
+
 func SubscribeConsumers() (err error) {
 	if amqSub, err := provider.AmqpSubscription(); err == nil {
 		subs := getAllSubs()
@@ -30,6 +36,5 @@ func SubscribeConsumers() (err error) {
 
 func getAllSubs() (subs []subscription) {
 	subs = append(subs, newUserSub()) // TODO: test with more subs
-
 	return subs
 }

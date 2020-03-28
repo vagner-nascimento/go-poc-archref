@@ -57,6 +57,7 @@ type SubsConfig struct {
 
 type PubsConfig struct {
 	Customer TopicConfig `json:"customer"`
+	Supplier TopicConfig `json:"supplier"`
 }
 
 type AmqIntegrationConfig struct {

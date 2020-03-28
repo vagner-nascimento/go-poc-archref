@@ -34,6 +34,9 @@
       "pubs": {
         "customer": {
           "topic": "q-customer"
+        },
+        "supplier": {
+          "topic": "q-supplier"
         }
       }
     }

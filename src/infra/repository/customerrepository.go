@@ -13,13 +13,13 @@ import (
 
 type customerRepository struct {
 	db  data.NoSqlHandler
-	pub *customerPublisher
+	pub amqpPublishHandler
 }
 
 func (o *customerRepository) Save(customer *model.Customer) (err error) {
 	customer.Id = uuid.New().String()
 	if _, err = o.db.InsertOne(customer); err == nil {
-		go o.pub.publish(*customer)
+		go o.pub.publish(customer)
 	}
 	return err
 }
@@ -69,14 +69,18 @@ func (o *customerRepository) Update(customer model.Customer) error {
 }
 
 func NewCustomerRepository() (custDataHandler app.CustomerDataHandler, err error) {
-	if db, err := data.NewNoSqlDb(config.Get().Data.NoSql.Collections.Customer); err == nil {
-		if pub, err := newCustomerPublisher(); err == nil {
+	var (
+		db  data.NoSqlHandler
+		pub amqpPublishHandler
+	)
+
+	if db, err = data.NewNoSqlDb(config.Get().Data.NoSql.Collections.Customer); err == nil {
+		if pub, err = newCustomerPublisher(); err == nil {
 			custDataHandler = &customerRepository{
 				db:  db,
 				pub: pub,
 			}
 		}
 	}
-
-	return custDataHandler, nil
+	return custDataHandler, err
 }

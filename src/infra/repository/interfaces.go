@@ -5,6 +5,6 @@ type AmqpSubscriptionHandler interface {
 	SubscribeAll() error
 }
 
-type AmqpPublishHandler interface {
-	Publish()
+type amqpPublishHandler interface {
+	publish(data interface{}) error
 }
