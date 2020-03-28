@@ -6,7 +6,16 @@
       "birthDay": 6,
       "birthMonth": 1,
       "eMail": "gerald@witcher-mail.com",
-      "userId": "5a586eb7-1863-494a-8f02-0231f038007c"
+      "userId": "5a586eb7-1863-494a-8f02-0231f038007c",
+      "address": {
+        "number": "67",
+        "street": "Golden Beans street",
+        "neighborhood": "Jungles Valley",
+        "postalCode": "09890-000",
+        "city": "Dreams Land",
+        "country": "AS",
+        "state": "RS"
+      }
     },
     {
       "name": "Yennefer",
@@ -14,7 +23,16 @@
       "birthDay": 23,
       "birthMonth": 10,
       "eMail": "yennefer@sorcerer-rmail.com",
-      "userId": "ac5949d1-fc3e-4938-af75-ec4d90733b3c"
+      "userId": "ac5949d1-fc3e-4938-af75-ec4d90733b3c",
+      "address": {
+        "number": "S/N",
+        "street": "Dark St",
+        "neighborhood": "Shadow Moon Valley",
+        "postalCode": "09890-000",
+        "city": "Dreams Land",
+        "country": "AS",
+        "state": "RS"
+      }
     }
   ],
   "users": [

@@ -15,4 +15,5 @@ type CustomerUseCase interface {
 	Update(id string, customer model.Customer) (model.Customer, error)
 	UpdateFromUser(user model.User) (model.Customer, error)
 	List(params []model.SearchParameter, page int64, quantity int64) ([]model.Customer, int64, error)
+	UpdateAddress(id string, address model.Address) (model.Customer, error)
 }

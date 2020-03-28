@@ -19,7 +19,7 @@ func newCustomersRoutes() *chi.Mux {
 	router := chi.NewRouter()
 	router.Post("/", postCustomer)
 	router.Put("/{id}", putCustomer)
-	//router.Patch("/{id}/email", patchCustomer)
+	router.Patch("/{id}/address", patchCustomerAddress)
 	//router.Delete("/{id}", deleteCustomer)
 	router.Get("/{id}", getCustomer)
 	router.Get("/", getCustomersPaginated)
@@ -83,9 +83,30 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO: implement patch
-func patchCustomer(w http.ResponseWriter, r *http.Request) {
+func patchCustomerAddress(w http.ResponseWriter, r *http.Request) {
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		render.JSON(w, r, err)
+		return
+	}
 
+	address, err := model.NeeAddressFromJsonBytes(bytes)
+	if err != nil {
+		render.JSON(w, r, err)
+		return
+	}
+
+	if customerUc, err := provider.CustomerUseCase(); err == nil {
+		id := getIdFromPath(r.URL.Path, 2)
+		if customer, err := customerUc.UpdateAddress(id, address); err != nil {
+			render.JSON(w, r, err)
+			return
+		} else {
+			render.JSON(w, r, customer)
+		}
+	} else {
+		render.JSON(w, r, err)
+	}
 }
 
 // TODO: implement DELETE CUSTOMER

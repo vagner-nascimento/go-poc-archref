@@ -9,42 +9,42 @@ type customerUseCase struct {
 	repository CustomerDataHandler
 }
 
-func (us *customerUseCase) getValidCustomer(id string) (customer model.Customer, err error) {
-	if customer, err = us.repository.Get(id); err == nil {
+func (uc *customerUseCase) getValidCustomer(id string) (customer model.Customer, err error) {
+	if customer, err = uc.repository.Get(id); err == nil {
 		err = validateFoundCustomer(customer)
 	}
 	return customer, err
 }
 
-func (us *customerUseCase) Create(customer *model.Customer) error {
-	return us.repository.Save(customer)
+func (uc *customerUseCase) Create(customer *model.Customer) error {
+	return uc.repository.Save(customer)
 }
 
-func (us *customerUseCase) Find(id string) (customer model.Customer, err error) {
-	return us.getValidCustomer(id)
+func (uc *customerUseCase) Find(id string) (customer model.Customer, err error) {
+	return uc.getValidCustomer(id)
 }
 
-func (us *customerUseCase) Update(id string, customer model.Customer) (newCustomer model.Customer, err error) {
+func (uc *customerUseCase) Update(id string, customer model.Customer) (newCustomer model.Customer, err error) {
 	var foundCustomer model.Customer
-	if foundCustomer, err = us.getValidCustomer(id); err != nil {
+	if foundCustomer, err = uc.getValidCustomer(id); err != nil {
 		return newCustomer, err
 	}
 	newCustomer = mapCustomerToUpdate(foundCustomer, customer)
-	if err = us.repository.Update(newCustomer); err != nil {
+	if err = uc.repository.Update(newCustomer); err != nil {
 		newCustomer = model.Customer{}
 	}
 	return newCustomer, err
 }
 
-func (us *customerUseCase) List(params []model.SearchParameter, page int64, quantity int64) ([]model.Customer, int64, error) {
-	return us.repository.GetMany(params, page, quantity)
+func (uc *customerUseCase) List(params []model.SearchParameter, page int64, quantity int64) ([]model.Customer, int64, error) {
+	return uc.repository.GetMany(params, page, quantity)
 }
 
-func (us *customerUseCase) UpdateFromUser(user model.User) (customer model.Customer, err error) {
+func (uc *customerUseCase) UpdateFromUser(user model.User) (customer model.Customer, err error) {
 	if err = validateUser(user); err == nil {
 		var val []interface{}
 		val = append(val, user.EMail)
-		customers, total, err := us.repository.GetMany([]model.SearchParameter{{
+		customers, total, err := uc.repository.GetMany([]model.SearchParameter{{
 			Field:  "eMail", // TODO: realize how to get json tag name from its definition
 			Values: val,
 		}},
@@ -58,9 +58,17 @@ func (us *customerUseCase) UpdateFromUser(user model.User) (customer model.Custo
 				err = errors.New("customer not found")
 			} else {
 				customer := mapUserToCustomer(user, customers[0])
-				err = us.repository.Update(customer)
+				err = uc.repository.Update(customer)
 			}
 		}
+	}
+	return customer, err
+}
+
+func (uc *customerUseCase) UpdateAddress(id string, address model.Address) (customer model.Customer, err error) {
+	if customer, err = uc.getValidCustomer(id); err == nil {
+		setCustomerAddress(&customer, address)
+		err = uc.repository.Update(customer)
 	}
 	return customer, err
 }

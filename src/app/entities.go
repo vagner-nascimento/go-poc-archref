@@ -27,6 +27,7 @@ func mapCustomerToUpdate(oldCustomer model.Customer, newCustomer model.Customer)
 		BirthDay:   newCustomer.BirthDay,
 		BirthMonth: newCustomer.BirthMonth,
 		UserId:     newCustomer.UserId,
+		Address:    newCustomer.Address,
 	}
 }
 
@@ -52,4 +53,8 @@ func validateFoundCustomer(customer model.Customer) (err error) {
 		err = errors.New("customer not found")
 	}
 	return err
+}
+
+func setCustomerAddress(cust *model.Customer, newAddress model.Address) {
+	cust.Address = newAddress
 }

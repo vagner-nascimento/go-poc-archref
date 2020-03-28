@@ -14,7 +14,16 @@ POC to define an architecture reference in Golang
  "birthYear": 1768,  
  "birthDay": 6,  
  "birthMonth": 1,  
- "eMail": "gerald@witcher-mail.com"  
+ "eMail": "gerald@witcher-mail.com", 
+ "address": {
+     "number": "67",
+     "street": "Golden Beans street",
+     "neighborhood": "Jungles Valley",
+     "postalCode": "09890-000",
+     "city": "Dreams Land"
+     "country": "AS",
+     "state": "RS"
+ }  
 }
     - other customer's payloads on: https://github.com/vagner-nascimento/go-poc-archref/blob/master/tests/payloads.json
  - **HTTP/PUT**: http://localhost:3000/api/v1/customers/{id}
@@ -25,7 +34,27 @@ POC to define an architecture reference in Golang
         "birthDay": 6,  
         "birthMonth": 1,  
         "eMail": "gerald@witcher-mail.com",  
- "userId": "026616e2-063a-408b-aa45-99dc671081db"  
+        "userId": "026616e2-063a-408b-aa45-99dc671081db", 
+        "address": {
+               "number": "67",
+               "street": "Golden Beans street",
+               "neighborhood": "Jungles Valley",
+               "postalCode": "09890-000",
+               "city": "Dreams Land"
+               "country": "AS",
+               "state": "RS"
+           }
+ } 
+ 
+ - **HTTP/PATCHT**: http://localhost:3000/api/v1/customers/{id}/address
+     - body (json):  
+       {                 "number": "67",
+               "street": "Golden Beans street",
+               "neighborhood": "Jungles Valley",
+               "postalCode": "09890-000",
+               "city": "Dreams Land"
+               "country": "AS",
+               "state": "RS"
  }  
  - **HTTP/GET** (by id): http://localhost:3000/api/v1/customers/{id}
  - **HTTP/GET** (by params): http://localhost:3000/api/v1/customers?p=val&p1=val1&valArr=["it1", "it2"]
@@ -44,10 +73,10 @@ POC to define an architecture reference in Golang
     - on **Get messages** menu increase **Messages** field to 50 (or more) and click on **Get Message(s)**
 
 # next steps
-- Develop delete and patch http endpoint
-- Layout restructure
+- Develop delete http endpoint
 - Http errors handler
 - App errors handler
+- Logger
 
 # utils
 - Golang: https://golang.org/
