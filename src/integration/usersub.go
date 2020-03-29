@@ -13,16 +13,16 @@ type userSub struct {
 	handler  func(data []byte)
 }
 
-func (us *userSub) getTopic() string {
-	return us.topic
+func (es *userSub) getTopic() string {
+	return es.topic
 }
 
-func (us *userSub) getConsumer() string {
-	return us.consumer
+func (es *userSub) getConsumer() string {
+	return es.consumer
 }
 
-func (us *userSub) getHandler() func([]byte) {
-	return us.handler
+func (es *userSub) getHandler() func([]byte) {
+	return es.handler
 }
 
 func newUserSub() subscription {

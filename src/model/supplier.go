@@ -6,6 +6,7 @@ type Supplier struct {
 	Id             string  `json:"id" bson:"id"`
 	Name           string  `json:"name" bson:"name"`
 	DocumentNumber string  `json:"documentNumber" bson:"documentNumber"`
+	IsActive       bool    `json:"isActive" bson:"isActive"`
 	CreditLimit    float64 `json:"creditLimit" bson:"creditLimit"`
 }
 

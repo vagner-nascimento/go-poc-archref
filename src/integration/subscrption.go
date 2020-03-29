@@ -28,13 +28,14 @@ func SubscribeConsumers() (err error) {
 		}
 
 		if err = amqSub.SubscribeAll(); err == nil {
-			infra.LogInfo(fmt.Sprintf("successfully subscribed: %s", strings.Join(subsSuccess, ",")))
+			infra.LogInfo(fmt.Sprintf("successfully subscribed: %s", strings.Join(subsSuccess, ", ")))
 		}
 	}
 	return err
 }
 
 func getAllSubs() (subs []subscription) {
-	subs = append(subs, newUserSub()) // TODO: test with more subs
-	return subs
+	return append(subs,
+		newUserSub(),
+		newEnterpriseSub())
 }

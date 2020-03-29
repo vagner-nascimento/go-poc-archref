@@ -52,7 +52,8 @@ type TopicConfig struct {
 }
 
 type SubsConfig struct {
-	User TopicConfig `json:"user"`
+	User       TopicConfig `json:"user"`
+	Enterprise TopicConfig `json:"enterprise"`
 }
 
 type PubsConfig struct {

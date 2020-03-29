@@ -57,7 +57,15 @@
     {
       "name": "Wash Clean",
       "documentNumber": "A468507GB",
+      "isActive": true,
       "creditLimit": 15520.51
+    }
+  ],
+  "enterprises": [
+    {
+      "companyName": "Wash Clean",
+      "document": "A468507GB",
+      "active": true
     }
   ]
 }

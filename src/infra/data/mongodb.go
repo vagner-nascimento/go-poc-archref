@@ -106,7 +106,6 @@ func NewNoSqlDb(collectionName string) (NoSqlHandler, error) {
 		return nil, err
 	}
 
-	// TODO: test if singleton  will work with more collections
 	return &mongoDb{
 		collection: mongoConnection.database.Collection(collectionName),
 	}, nil

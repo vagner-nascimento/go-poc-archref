@@ -31,21 +31,59 @@ type (
 		Immediate bool
 		Args      amqp.Table
 	}
+	pubDefaultValues struct {
+		queue   queueInfo
+		message messageInfo
+	}
+	rabbitAmqpHandler struct {
+		subscribers []rabbitSubscriber
+		pubValues   pubDefaultValues
+	}
+	rabbitSubscriber struct {
+		queue   queueInfo
+		message messageInfo
+		handler func([]byte)
+	}
 )
 
-var singletonAmqp struct {
-	amqoConn    *amqp.Connection
-	amqpChannel *amqp.Channel
+var (
+	rabbitCloseError chan *amqp.Error
+	rabbitConn       *amqp.Connection
+	onceRabbitConn   sync.Once
+)
+
+func connectToRabbit() (err error) {
+	onceRabbitConn.Do(func() {
+		connStr := config.Get().Data.Amqp.ConnStr
+		if rabbitConn, err = getRabbitConn(connStr); err == nil {
+			infra.LogInfo("successfully connected into RabbitMQ server")
+			rabbitCloseError = make(chan *amqp.Error)
+			rabbitConn.NotifyClose(rabbitCloseError)
+			go reconnectToRabbit(connStr)
+		}
+	})
+	return err
 }
 
-type rabbitSubscriber struct {
-	queue   queueInfo
-	message messageInfo
-	handler func([]byte)
+func reconnectToRabbit(connStr string) {
+	for {
+		if closeErr := <-rabbitCloseError; closeErr != nil {
+			infra.LogInfo("reconnecting into rabbit mq server")
+			var err error
+			if rabbitConn, err = getRabbitConn(connStr); err == nil {
+				infra.LogInfo("successfully reconnected into RabbitMQ server")
+				rabbitConn.NotifyClose(rabbitCloseError)
+			}
+		}
+	}
+}
+
+func getRabbitConn(connStr string) (*amqp.Connection, error) {
+	return amqp.Dial(connStr)
 }
 
 func subscribeRabbitConsumers(subscribers []rabbitSubscriber) error {
-	ch, err := amqpChannel()
+	ch, err := rabbitConn.Channel()
 	if err != nil {
 		return err
 	}
@@ -104,23 +142,6 @@ func processMessages(ch *amqp.Channel, sub rabbitSubscriber) (func(), error) {
 	}, nil
 }
 
-// -----------> RESTRUCTURING
-type pubDefaultValues struct {
-	queue   queueInfo
-	message messageInfo
-}
-
-type subDefaultValues struct {
-	queue   queueInfo
-	message messageInfo
-}
-
-type rabbitAmqpHandler struct {
-	subscribers []rabbitSubscriber
-	channel     *amqp.Channel
-	pubValues   pubDefaultValues
-}
-
 func (rh *rabbitAmqpHandler) AddSubscriber(topicName string, consumerName string, handler func([]byte)) error {
 	if err := validateSub(topicName, consumerName, handler); err != nil {
 		return err
@@ -138,8 +159,8 @@ func (rh *rabbitAmqpHandler) SubscribeAll() (err error) {
 	return err
 }
 
-func (rh *rabbitAmqpHandler) Publish(data []byte, topicName string) error {
-	ch, err := amqpChannel()
+func (rh *rabbitAmqpHandler) Publish(data []byte, topicName string) (err error) {
+	ch, err := rabbitConn.Channel()
 	if err != nil {
 		return err
 	}
@@ -152,25 +173,43 @@ func (rh *rabbitAmqpHandler) Publish(data []byte, topicName string) error {
 		rh.pubValues.queue.NoWait,
 		rh.pubValues.queue.Args,
 	)
-	if err != nil {
-		return err
+	if err == nil {
+		err = ch.Publish(
+			rh.pubValues.message.Exchange,
+			q.Name,
+			rh.pubValues.message.Mandatory,
+			rh.pubValues.message.Immediate,
+			amqp.Publishing{
+				ContentType: "application/json",
+				Body:        data,
+			},
+		)
+	}
+	return err
+}
+
+func NewAmqpHandler() (AmqpHandler, error) {
+	if err := connectToRabbit(); err != nil {
+		return nil, err
 	}
 
-	err = ch.Publish(
-		rh.pubValues.message.Exchange,
-		q.Name,
-		rh.pubValues.message.Mandatory,
-		rh.pubValues.message.Immediate,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        data,
+	return &rabbitAmqpHandler{
+		pubValues: pubDefaultValues{
+			queue: queueInfo{
+				Durable:    false,
+				AutoDelete: false,
+				Exclusive:  false,
+				NoWait:     false,
+				Args:       nil,
+			},
+			message: messageInfo{
+				Exchange:  "",
+				Mandatory: false,
+				Immediate: false,
+				Args:      nil,
+			},
 		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	}, nil
 }
 
 func validateSub(topicName string, consumerName string, messageHandler func(data []byte)) error {
@@ -201,50 +240,4 @@ func newRabbitSubscriber(queueName string, consumerName string, handler func([]b
 		},
 		handler: handler,
 	}
-}
-
-func NewAmqpHandler() (AmqpHandler, error) {
-	ch, err := amqpChannel()
-	if err != nil {
-		return nil, err
-	}
-	return &rabbitAmqpHandler{
-		channel: ch,
-		pubValues: pubDefaultValues{
-			queue: queueInfo{
-				Durable:    false,
-				AutoDelete: false,
-				Exclusive:  false,
-				NoWait:     false,
-				Args:       nil,
-			},
-			message: messageInfo{
-				Exchange:  "",
-				Mandatory: false,
-				Immediate: false,
-				Args:      nil,
-			},
-		},
-	}, nil
-}
-
-var amqpOnce sync.Once
-
-func amqpChannel() (*amqp.Channel, error) {
-	var err error
-	amqpOnce.Do(func() {
-		if singletonAmqp.amqoConn, err = amqp.Dial(config.Get().Data.Amqp.ConnStr); err == nil {
-			infra.LogInfo("successfully connected into AMQP server")
-
-			if singletonAmqp.amqpChannel, err = singletonAmqp.amqoConn.Channel(); err == nil {
-				infra.LogInfo("successfully created AMQP channel")
-			}
-		}
-	})
-
-	if singletonAmqp.amqpChannel == nil && err == nil {
-		err = errors.New("cannot open channel into amqp sever")
-	}
-
-	return singletonAmqp.amqpChannel, err
 }

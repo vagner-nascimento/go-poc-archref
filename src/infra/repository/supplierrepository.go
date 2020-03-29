@@ -24,8 +24,7 @@ func (repo *supplierRepository) Save(sup *model.Supplier) (err error) {
 }
 
 func (repo *supplierRepository) Update(sup model.Supplier) (err error) {
-	replaceCount, err := repo.db.ReplaceOne(bson.M{"id": sup.Id}, sup)
-	if err == nil && replaceCount < 1 {
+	if replaceCount, err := repo.db.ReplaceOne(bson.M{"id": sup.Id}, sup); err == nil && replaceCount < 1 {
 		err = errors.New("none supplier was replaced")
 	}
 	if err == nil {

@@ -28,7 +28,11 @@
       "subs": {
         "user": {
           "topic": "q-user",
-          "consumer": "poc-golang"
+          "consumer": "c-user"
+        },
+        "enterprise": {
+          "topic": "q-enterprise",
+          "consumer": "c-enterprise"
         }
       },
       "pubs": {

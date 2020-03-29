@@ -15,6 +15,7 @@ func mapUserToCustomer(u model.User, c model.Customer) model.Customer {
 		BirthDay:   u.BirthDay,
 		BirthMonth: u.BirthMonth,
 		UserId:     u.Id,
+		Address:    c.Address,
 	}
 }
 
