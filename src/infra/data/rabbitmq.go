@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"github.com/vagner-nascimento/go-poc-archref/config"
-	"github.com/vagner-nascimento/go-poc-archref/src/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"strings"
 	"sync"
 )
@@ -56,7 +56,7 @@ func connectToRabbit() (err error) {
 	onceRabbitConn.Do(func() {
 		connStr := config.Get().Data.Amqp.ConnStr
 		if rabbitConn, err = getRabbitConn(connStr); err == nil {
-			infra.LogInfo("successfully connected into RabbitMQ server")
+			logger.Info("successfully connected into RabbitMQ server")
 			rabbitCloseError = make(chan *amqp.Error)
 			rabbitConn.NotifyClose(rabbitCloseError)
 			go reconnectToRabbit(connStr)
@@ -68,10 +68,10 @@ func connectToRabbit() (err error) {
 func reconnectToRabbit(connStr string) {
 	for {
 		if closeErr := <-rabbitCloseError; closeErr != nil {
-			infra.LogInfo("reconnecting into rabbit mq server")
+			logger.Info("reconnecting into rabbit mq server")
 			var err error
 			if rabbitConn, err = getRabbitConn(connStr); err == nil {
-				infra.LogInfo("successfully reconnected into RabbitMQ server")
+				logger.Info("successfully reconnected into RabbitMQ server")
 				rabbitConn.NotifyClose(rabbitCloseError)
 			}
 		}
@@ -93,7 +93,7 @@ func subscribeRabbitConsumers(subscribers []rabbitSubscriber) error {
 		c := subscribers[i]
 		processMsgs, err := processMessages(ch, c)
 		if err != nil {
-			infra.LogError(fmt.Sprintf("error on try subbscribe consumer %s", c.message.Consumer), err)
+			logger.Error(fmt.Sprintf("error on try subbscribe consumer %s", c.message.Consumer), err)
 			continue
 		}
 		go processMsgs()
@@ -104,7 +104,7 @@ func subscribeRabbitConsumers(subscribers []rabbitSubscriber) error {
 		return errors.New("none queue to be listened")
 	}
 
-	infra.LogInfo("listening to the queues: " + strings.Join(qNames, ","))
+	logger.Info("listening to the queues: " + strings.Join(qNames, ","))
 	return nil
 }
 
@@ -136,7 +136,7 @@ func processMessages(ch *amqp.Channel, sub rabbitSubscriber) (func(), error) {
 
 	return func() {
 		for msg := range msgs {
-			infra.LogInfo(fmt.Sprintf("message received from %s. body:\r\n %s", q.Name, string(msg.Body)))
+			logger.Info(fmt.Sprintf("message received from %s. body:\r\n %s", q.Name, string(msg.Body)))
 			sub.handler(msg.Body)
 		}
 	}, nil

@@ -2,7 +2,7 @@ package integration
 
 import (
 	"github.com/vagner-nascimento/go-poc-archref/config"
-	"github.com/vagner-nascimento/go-poc-archref/src/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"github.com/vagner-nascimento/go-poc-archref/src/provider"
 )
@@ -31,12 +31,15 @@ func newUserSub() subscription {
 		topic:    userConf.Topic,
 		consumer: userConf.Consumer,
 		handler: func(data []byte) {
-			if user, err := model.NewUserFromJsonBytes(data); err == nil {
-				if customerUs, err := provider.CustomerUseCase(); err == nil {
-					_, err = customerUs.UpdateFromUser(user)
+			var err error
+			var user model.User
+			if user, err = model.NewUserFromJsonBytes(data); err == nil {
+				if customerUc, err := provider.CustomerUseCase(); err == nil {
+					go customerUc.UpdateFromUser(user)
 				}
-			} else {
-				infra.LogError("error on update a customer", err)
+			}
+			if err != nil {
+				logger.Error("error on update a customer", err)
 			}
 		},
 	}

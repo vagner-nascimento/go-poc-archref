@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vagner-nascimento/go-poc-archref/config"
-	"github.com/vagner-nascimento/go-poc-archref/src/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"strings"
 	"sync"
@@ -130,7 +130,7 @@ func mongoDbConnect() (err error) {
 		if client, err := mongo.Connect(ctx, cliOpts); err == nil {
 			if err = client.Ping(context.TODO(), nil); err == nil {
 				mongoConnection.database = client.Database(mongoConf.Database)
-				infra.LogInfo(fmt.Sprintf("successfully connected into mongo database %s", mongoConf.Database))
+				logger.Info(fmt.Sprintf("successfully connected into mongo database %s", mongoConf.Database))
 				setMongoConfigs(mongoConf)
 			}
 		}

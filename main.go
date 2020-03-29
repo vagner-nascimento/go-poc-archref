@@ -4,17 +4,16 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/src/loader"
 )
 
-func keepRunning() {
-	<-make(chan bool)
-}
-
 func init() {
 	if err := loader.LoadApplication(); err != nil {
 		panic(err)
 	}
 }
 
+func keepRunning() {
+	<-make(chan bool)
+}
+
 func main() {
-	// TODO: make a error handler
 	keepRunning()
 }

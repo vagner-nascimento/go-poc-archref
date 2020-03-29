@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vagner-nascimento/go-poc-archref/config"
-	"github.com/vagner-nascimento/go-poc-archref/src/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"github.com/vagner-nascimento/go-poc-archref/src/integration"
 	"github.com/vagner-nascimento/go-poc-archref/src/presentation"
 	"os"
@@ -13,8 +13,8 @@ import (
 
 func LoadApplication() error {
 	loadConfiguration()
-	subSuccess := loadSubscribers()
-	httpSuccess := loadHttpPresentation()
+	httpSuccess := loadPresentation()
+	subSuccess := loadIntegration()
 	if !subSuccess && !httpSuccess {
 		return errors.New("cannot load application")
 	}
@@ -22,33 +22,32 @@ func LoadApplication() error {
 }
 
 func loadConfiguration() {
-	infra.LogInfo("loading configurations")
+	logger.Info("loading configurations")
 	env := os.Getenv("GO_ENV")
 	if env == "" {
 		env = "DEV"
 	}
 	if err := config.Load(env); err != nil {
-		infra.LogInfo("cannot load configurations")
+		logger.Error("cannot load configurations", err)
 		panic(err)
 	}
-
 	conf, _ := json.Marshal(config.Get())
-	fmt.Println("configurations loaded", string(conf))
+	logger.Info(fmt.Sprintf("configurations loaded %s", string(conf)))
 }
 
-func loadSubscribers() bool {
-	infra.LogInfo("loading subscribers")
+func loadIntegration() bool {
+	logger.Info("loading subscribers")
 	if err := integration.SubscribeConsumers(); err != nil {
-		infra.LogError("cannot subscribe consumers", err)
+		logger.Error("cannot subscribe consumers", err)
 		return false
 	}
 	return true
 }
 
-func loadHttpPresentation() bool {
-	infra.LogInfo("loading http presentation")
+func loadPresentation() bool {
+	logger.Info("loading http presentation")
 	if err := presentation.StartHttpServer(); err != nil {
-		infra.LogError("cannot load http presentation", err)
+		logger.Error("cannot load http presentation", err)
 		return false
 	}
 	return true

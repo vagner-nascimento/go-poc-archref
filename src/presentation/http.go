@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/vagner-nascimento/go-poc-archref/config"
-	"github.com/vagner-nascimento/go-poc-archref/src/infra"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"net/http"
 )
 
@@ -35,7 +35,7 @@ func StartHttpServer() error {
 	})
 
 	walkThroughRoutes := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		infra.LogInfo(fmt.Sprintf("%s %s", method, route))
+		logger.Info(fmt.Sprintf("%s %s", method, route))
 		return nil
 	}
 
@@ -44,6 +44,6 @@ func StartHttpServer() error {
 	}
 
 	port := config.Get().Presentation.Web.Port
-	infra.LogInfo(fmt.Sprintf("http server listening at port: %d", port))
+	logger.Info(fmt.Sprintf("http server listening at port: %d", port))
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 }

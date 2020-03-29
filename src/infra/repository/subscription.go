@@ -5,15 +5,15 @@ import (
 )
 
 type amqpSubscription struct {
-	amqpHandler data.AmqpHandler
+	amqp data.AmqpHandler
 }
 
 func (rs *amqpSubscription) AddSubscriber(topicName string, consumerName string, messageHandler func(data []byte)) error {
-	return rs.amqpHandler.AddSubscriber(topicName, consumerName, messageHandler)
+	return rs.amqp.AddSubscriber(topicName, consumerName, messageHandler)
 }
 
 func (rs *amqpSubscription) SubscribeAll() (err error) {
-	return rs.amqpHandler.SubscribeAll()
+	return rs.amqp.SubscribeAll()
 }
 
 func NewAmqpSubscription() (AmqpSubscriptionHandler, error) {
@@ -21,5 +21,5 @@ func NewAmqpSubscription() (AmqpSubscriptionHandler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &amqpSubscription{amqpHandler: handler}, nil
+	return &amqpSubscription{amqp: handler}, nil
 }
