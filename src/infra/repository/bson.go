@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-// TODO: move it to DATA, repository doesn't know mongo
+// TODO: move it to DATA, repository shouldn't know mongo
 func getBsonFilters(params []model.SearchParameter) bson.D {
 	convertValue := func(val interface{}) (res interface{}) {
 		if res, err := strconv.ParseInt(val.(string), 0, 64); err == nil {

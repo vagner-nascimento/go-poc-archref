@@ -6,14 +6,13 @@ import (
 )
 
 func getFormattedMessage(msg string) string {
-	return fmt.Sprintf("%s - %s", time.Now().String(), msg)
+	return fmt.Sprintf("%s - %s", time.Now().Format("02/01/2006 15:04:05"), msg)
 }
 
 func Info(msg string) {
 	fmt.Println(getFormattedMessage(msg))
 }
 
-//TODO: realise how to format date
 func Error(msg string, err error) {
 	fmt.Println(getFormattedMessage(msg), err)
 }

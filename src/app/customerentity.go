@@ -56,6 +56,6 @@ func validateFoundCustomer(customer model.Customer) (err error) {
 	return err
 }
 
-func setCustomerAddress(cust *model.Customer, newAddress model.Address) {
-	cust.Address = newAddress
+func setCustomerAddress(customer *model.Customer, newAddress model.Address) {
+	customer.Address = newAddress
 }
