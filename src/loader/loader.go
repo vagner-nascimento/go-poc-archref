@@ -7,7 +7,7 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/config"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"github.com/vagner-nascimento/go-poc-archref/src/integration"
-	"github.com/vagner-nascimento/go-poc-archref/src/presentation"
+	"github.com/vagner-nascimento/go-poc-archref/src/presentation/http"
 	"os"
 )
 

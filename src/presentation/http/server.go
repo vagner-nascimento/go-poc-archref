@@ -26,9 +26,10 @@ import (
 		- Log api calls
 		- Http 2 support (ssl)
 */
-
+//TODO: realise how to validate URL and Query params
 func StartHttpServer() error {
 	router := chi.NewRouter()
+	router.Use(httpGeneralMiddleWare)
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/customers", newCustomersRoutes())
 		r.Mount("/suppliers", newSupplierRoutes())

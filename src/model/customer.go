@@ -5,24 +5,24 @@ import "encoding/json"
 // TODO: realise how to include dates into models
 type Customer struct {
 	Id         string  `json:"id" bson:"id"`
-	Name       string  `json:"name" validate:"required,min=3,max=150" bson:"name"`
-	EMail      string  `json:"eMail" validate:"required,email" bson:"eMail"`
-	BirthYear  int     `json:"birthYear" validate:"min=1900" bson:"birthYear"`
-	BirthDay   int     `json:"birthDay" validate:"min=1,max=31" bson:"birthDay"`
-	BirthMonth int     `json:"birthMonth" validate:"min=1,max=12" bson:"birthMont"`
+	Name       string  `json:"name" bson:"name" validate:"required,min=3,max=150"`
+	EMail      string  `json:"eMail" bson:"eMail" validate:"required,email"`
+	BirthYear  int     `json:"birthYear" bson:"birthYear" validate:"min=1900"`
+	BirthDay   int     `json:"birthDay" bson:"birthDay" validate:"min=1,max=31"`
+	BirthMonth int     `json:"birthMonth" bson:"birthMont" validate:"min=1,max=12"`
 	UserId     string  `json:"userId" bson:"userId"`
-	Address    Address `json:"address" validate:"required" bson:"address"`
+	Address    Address `json:"address" bson:"address" validate:"required"`
 }
 
 type Address struct {
-	Street       string `json:"street" validate:"required,min=3,max=255" bson:"street"`
-	Number       string `json:"number" validate:"required,min=2,max=255" bson:"number"`
-	Neighborhood string `json:"neighborhood" validate:"required,min=3,max=255" bson:"neighborhood"`
-	Complement   string `json:"complement" validate:"min=2,max=255" bson:"complement"`
-	PostalCode   string `json:"postalCode" validate:"required,min=2,max=150" bson:"postalCode"`
-	City         string `json:"city" validate:"required,min=3,max=150" bson:"city"`
-	Country      string `json:"country" validate:"required,min=2,max=2" bson:"country"`
-	State        string `json:"state" validate:"required,min=2,max=150" bson:"state"`
+	Street       string `json:"street" bson:"street" validate:"required,min=3,max=255"`
+	Number       string `json:"number" bson:"number" validate:"required,min=2,max=255"`
+	Neighborhood string `json:"neighborhood" bson:"neighborhood" validate:"required,min=3,max=255"`
+	Complement   string `json:"complement" bson:"complement" validate:"min=2,max=255"`
+	PostalCode   string `json:"postalCode" bson:"postalCode" validate:"required,min=2,max=150"`
+	City         string `json:"city" bson:"city" validate:"required,min=3,max=150"`
+	Country      string `json:"country" bson:"country" validate:"required,min=2,max=2"`
+	State        string `json:"state" bson:"state" validate:"required,min=2,max=150"`
 }
 
 func NewCustomerFromJsonBytes(bytes []byte) (customer Customer, err error) {

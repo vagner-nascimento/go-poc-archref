@@ -1,11 +1,8 @@
 package presentation
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"github.com/vagner-nascimento/go-poc-archref/src/provider"
 	"io/ioutil"
@@ -23,27 +20,20 @@ func newCustomersRoutes() *chi.Mux {
 	return router
 }
 
-// TODO: validate params (path, query, body, etc)
-// TODO: improve http error handler
+// TODO: validate params (path, query)
+// TODO: realise how to write specifics responses(errors like 400, 404, 500 etc, and success) generically
 // TODO: realise how to send an safe error into response
 // TODO: clean duplicate codes
 func postCustomer(w http.ResponseWriter, r *http.Request) {
-	// TODO: Realise how to set content type for whole requests to the API
-	w.Header().Set("Content-Type", "application/json")
-
 	customer, err := parseCustomer(r)
 	if err != nil {
 		render.JSON(w, r, err)
 		return
 	}
-
-	if vErr := validateCustomer(customer); len(vErr.Errors) > 0 {
-		jsonErr, _ := json.Marshal(vErr)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(jsonErr)
+	if vErr := validateBody(customer); len(vErr.Errors) > 0 {
+		writeBadRequestResponse(w, vErr)
 		return
 	}
-
 	if customerUc, err := provider.CustomerUseCase(); err == nil {
 		if err = customerUc.Create(&customer); err != nil {
 			render.JSON(w, r, err)
@@ -140,35 +130,6 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO: make a func for each an call once by time
-func convertAndValidateCustomer(r *http.Request) (customer model.Customer, validErr httpErrors, err error) {
-	//convert
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err == nil {
-		defer r.Body.Close()
-		//If int(and i guess that other number too) starts with zero returns error
-		if customer, err = model.NewCustomerFromJsonBytes(bytes); err != nil {
-			customer = model.Customer{}
-			return customer, validErr, err
-		}
-	}
-
-	//validate
-	v := validator.New()
-	vErrs := v.Struct(customer)
-	for _, e := range vErrs.(validator.ValidationErrors) {
-		msg := fmt.Sprint(e)
-		tp := "validation"
-		validErr.Errors = append(validErr.Errors, httpError{ // TODO: realise how to customize messages and extract field names
-			Message: &msg,
-			Type:    &tp,
-			Field:   nil,
-		})
-	}
-
-	return customer, validErr, err
-}
-
 func parseCustomer(r *http.Request) (customer model.Customer, err error) {
 	defer r.Body.Close()
 
@@ -181,21 +142,4 @@ func parseCustomer(r *http.Request) (customer model.Customer, err error) {
 	}
 
 	return customer, err
-}
-
-func validateCustomer(customer model.Customer) (errs httpErrors) {
-	v := validator.New()
-	if vErrs := v.Struct(customer); vErrs != nil {
-		for _, e := range vErrs.(validator.ValidationErrors) {
-			msg := fmt.Sprint(e)
-			tp := "validation"
-			errs.Errors = append(errs.Errors, httpError{
-				Message: &msg,
-				Type:    &tp,
-				Field:   nil,
-			})
-		}
-	}
-
-	return errs
 }

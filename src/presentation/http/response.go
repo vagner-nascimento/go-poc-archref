@@ -1,6 +1,8 @@
 package presentation
 
 import (
+	"encoding/json"
+	"net/http"
 	"reflect"
 )
 
@@ -25,4 +27,10 @@ func newPaginatedResponse(data interface{}, page int64, quantity int, total int6
 		PageSize: quantity,
 		Total:    total,
 	}
+}
+
+func writeBadRequestResponse(w http.ResponseWriter, httpErr httpErrors) {
+	jsonErr, _ := json.Marshal(httpErr)
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write(jsonErr)
 }

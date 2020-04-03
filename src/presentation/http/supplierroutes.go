@@ -19,22 +19,24 @@ func newSupplierRoutes() *chi.Mux {
 }
 
 func postSupplier(w http.ResponseWriter, r *http.Request) {
-	bytes, err := ioutil.ReadAll(r.Body)
+	supplier, err := parseSupplier(r)
 	if err != nil {
 		render.JSON(w, r, err)
 		return
 	}
-
-	sup, err := model.NewSupplierFromJsonBytes(bytes) //If int(and i guess that other number too) starts with zero returns error
+	if vErr := validateBody(supplier); len(vErr.Errors) > 0 {
+		writeBadRequestResponse(w, vErr)
+		return
+	}
 	if err != nil {
 		render.JSON(w, r, err)
 		return
 	}
 	if supplierUc, err := provider.SupplierUseCase(); err == nil {
-		if err = supplierUc.Create(&sup); err != nil {
+		if err = supplierUc.Create(&supplier); err != nil {
 			render.JSON(w, r, err)
 		} else {
-			render.JSON(w, r, sup)
+			render.JSON(w, r, supplier)
 		}
 	} else {
 		render.JSON(w, r, err)
@@ -93,4 +95,18 @@ func getSuppliersPaginated(w http.ResponseWriter, r *http.Request) {
 			render.JSON(w, r, err)
 		}
 	}
+}
+
+func parseSupplier(r *http.Request) (supplier model.Supplier, err error) {
+	defer r.Body.Close()
+
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err == nil {
+		//If int(and i guess that other number too) starts with zero returns error
+		if supplier, err = model.NewSupplierFromJsonBytes(bytes); err != nil {
+			supplier = model.Supplier{}
+		}
+	}
+
+	return supplier, err
 }
