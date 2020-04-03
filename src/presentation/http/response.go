@@ -34,3 +34,15 @@ func writeBadRequestResponse(w http.ResponseWriter, httpErr httpErrors) {
 	w.WriteHeader(http.StatusBadRequest)
 	w.Write(jsonErr)
 }
+
+func writeOkResponse(w http.ResponseWriter, data interface{}) {
+	jsonData, _ := json.Marshal(data)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
+}
+
+func writeCreatedResponse(w http.ResponseWriter, data interface{}) {
+	jsonData, _ := json.Marshal(data)
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonData)
+}

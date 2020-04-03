@@ -19,24 +19,16 @@ func newSupplierRoutes() *chi.Mux {
 }
 
 func postSupplier(w http.ResponseWriter, r *http.Request) {
-	supplier, err := parseSupplier(r)
-	if err != nil {
-		render.JSON(w, r, err)
-		return
-	}
-	if vErr := validateBody(supplier); len(vErr.Errors) > 0 {
+	supplier, vErr := parseAndValidateSupplier(r)
+	if len(vErr.Errors) > 0 {
 		writeBadRequestResponse(w, vErr)
-		return
-	}
-	if err != nil {
-		render.JSON(w, r, err)
 		return
 	}
 	if supplierUc, err := provider.SupplierUseCase(); err == nil {
 		if err = supplierUc.Create(&supplier); err != nil {
 			render.JSON(w, r, err)
 		} else {
-			render.JSON(w, r, supplier)
+			writeCreatedResponse(w, supplier)
 		}
 	} else {
 		render.JSON(w, r, err)
@@ -44,24 +36,18 @@ func postSupplier(w http.ResponseWriter, r *http.Request) {
 }
 
 func putSupplier(w http.ResponseWriter, r *http.Request) {
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		render.JSON(w, r, err)
-		return
-	}
-
-	sup, err := model.NewSupplierFromJsonBytes(bytes)
-	if err != nil {
-		render.JSON(w, r, err)
+	supplier, vErr := parseAndValidateSupplier(r)
+	if len(vErr.Errors) > 0 {
+		writeBadRequestResponse(w, vErr)
 		return
 	}
 	if supplierUc, err := provider.SupplierUseCase(); err == nil {
 		id := getDataFromPath(r.URL.Path, 1)
-		if customer, err := supplierUc.Update(id, sup); err != nil {
+		if sup, err := supplierUc.Update(id, supplier); err != nil {
 			render.JSON(w, r, err)
 			return
 		} else {
-			render.JSON(w, r, customer)
+			writeOkResponse(w, sup)
 		}
 	} else {
 		render.JSON(w, r, err)
@@ -71,8 +57,8 @@ func putSupplier(w http.ResponseWriter, r *http.Request) {
 func getSupplier(w http.ResponseWriter, r *http.Request) {
 	if supUc, err := provider.SupplierUseCase(); err == nil {
 		id := getDataFromPath(r.URL.Path, 1)
-		if customer, err := supUc.Find(id); err == nil {
-			render.JSON(w, r, customer)
+		if sup, err := supUc.Find(id); err == nil {
+			writeOkResponse(w, sup)
 			return
 		} else {
 			render.JSON(w, r, err)
@@ -89,7 +75,7 @@ func getSuppliersPaginated(w http.ResponseWriter, r *http.Request) {
 				render.JSON(w, r, err)
 				return
 			} else {
-				render.JSON(w, r, newPaginatedResponse(suppliers, page, len(suppliers), total))
+				writeOkResponse(w, newPaginatedResponse(suppliers, page, len(suppliers), total))
 			}
 		} else {
 			render.JSON(w, r, err)
@@ -97,16 +83,21 @@ func getSuppliersPaginated(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseSupplier(r *http.Request) (supplier model.Supplier, err error) {
+func parseAndValidateSupplier(r *http.Request) (supplier model.Supplier, errs httpErrors) {
 	defer r.Body.Close()
 
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err == nil {
 		//If int(and i guess that other number too) starts with zero returns error
 		if supplier, err = model.NewSupplierFromJsonBytes(bytes); err != nil {
+			errs.Errors = append(errs.Errors, getConversionError(err))
 			supplier = model.Supplier{}
+		} else {
+			errs = validateHttpRequestData(supplier)
 		}
+	} else {
+		errs.Errors = append(errs.Errors, getConversionError(err))
 	}
 
-	return supplier, err
+	return supplier, errs
 }

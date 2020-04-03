@@ -2,6 +2,8 @@ package presentation
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"github.com/vagner-nascimento/go-poc-archref/src/tool"
 	"net/url"
@@ -46,4 +48,21 @@ func getPaginatedParamsFromQuery(values url.Values) (params []model.SearchParame
 	}
 
 	return params, page, pageSize, err
+}
+
+//TODO: Improve validate body message
+func validateHttpRequestData(data interface{}) (errs httpErrors) {
+	v := validator.New()
+	if vErrs := v.Struct(data); vErrs != nil {
+		for _, e := range vErrs.(validator.ValidationErrors) {
+			msg := fmt.Sprint(e)
+			tp := "validation"
+			errs.Errors = append(errs.Errors, httpError{
+				Message: &msg,
+				Type:    &tp,
+				Field:   nil,
+			})
+		}
+	}
+	return errs
 }

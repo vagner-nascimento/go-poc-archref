@@ -20,17 +20,13 @@ func newCustomersRoutes() *chi.Mux {
 	return router
 }
 
+// TODO: realise how to write specifics responses (errors - 404, 500) generically
 // TODO: validate params (path, query)
-// TODO: realise how to write specifics responses(errors like 400, 404, 500 etc, and success) generically
 // TODO: realise how to send an safe error into response
 // TODO: clean duplicate codes
 func postCustomer(w http.ResponseWriter, r *http.Request) {
-	customer, err := parseCustomer(r)
-	if err != nil {
-		render.JSON(w, r, err)
-		return
-	}
-	if vErr := validateBody(customer); len(vErr.Errors) > 0 {
+	customer, vErr := parseAndValidateCustomer(r)
+	if len(vErr.Errors) > 0 {
 		writeBadRequestResponse(w, vErr)
 		return
 	}
@@ -38,7 +34,7 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 		if err = customerUc.Create(&customer); err != nil {
 			render.JSON(w, r, err)
 		} else {
-			render.JSON(w, r, customer)
+			writeCreatedResponse(w, customer)
 		}
 	} else {
 		render.JSON(w, r, err)
@@ -46,15 +42,9 @@ func postCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func putCustomer(w http.ResponseWriter, r *http.Request) {
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		render.JSON(w, r, err)
-		return
-	}
-
-	customer, err := model.NewCustomerFromJsonBytes(bytes)
-	if err != nil {
-		render.JSON(w, r, err)
+	customer, vErr := parseAndValidateCustomer(r)
+	if len(vErr.Errors) > 0 {
+		writeBadRequestResponse(w, vErr)
 		return
 	}
 	if customerUc, err := provider.CustomerUseCase(); err == nil {
@@ -63,20 +53,20 @@ func putCustomer(w http.ResponseWriter, r *http.Request) {
 			render.JSON(w, r, err)
 			return
 		} else {
-			render.JSON(w, r, customer)
+			writeOkResponse(w, customer)
 		}
 	} else {
 		render.JSON(w, r, err)
 	}
 }
 
+// TODO: validate PATCH
 func patchCustomerAddress(w http.ResponseWriter, r *http.Request) {
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		render.JSON(w, r, err)
 		return
 	}
-
 	address, err := model.NewAddressFromJsonBytes(bytes)
 	if err != nil {
 		render.JSON(w, r, err)
@@ -89,7 +79,7 @@ func patchCustomerAddress(w http.ResponseWriter, r *http.Request) {
 			render.JSON(w, r, err)
 			return
 		} else {
-			render.JSON(w, r, customer)
+			writeOkResponse(w, customer)
 		}
 	} else {
 		render.JSON(w, r, err)
@@ -105,7 +95,7 @@ func getCustomer(w http.ResponseWriter, r *http.Request) {
 	if customerUc, err := provider.CustomerUseCase(); err == nil {
 		id := getDataFromPath(r.URL.Path, 1)
 		if customer, err := customerUc.Find(id); err == nil {
-			render.JSON(w, r, customer)
+			writeOkResponse(w, customer)
 			return
 		} else {
 			render.JSON(w, r, err)
@@ -122,7 +112,7 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 				render.JSON(w, r, err)
 				return
 			} else {
-				render.JSON(w, r, newPaginatedResponse(customers, page, len(customers), total))
+				writeOkResponse(w, newPaginatedResponse(customers, page, len(customers), total))
 			}
 		} else {
 			render.JSON(w, r, err)
@@ -130,16 +120,21 @@ func getCustomersPaginated(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseCustomer(r *http.Request) (customer model.Customer, err error) {
+func parseAndValidateCustomer(r *http.Request) (customer model.Customer, errs httpErrors) {
 	defer r.Body.Close()
 
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err == nil {
 		//If int(and i guess that other number too) starts with zero returns error
 		if customer, err = model.NewCustomerFromJsonBytes(bytes); err != nil {
+			errs.Errors = append(errs.Errors, getConversionError(err))
 			customer = model.Customer{}
+		} else {
+			errs = validateHttpRequestData(customer)
 		}
+	} else {
+		errs.Errors = append(errs.Errors, getConversionError(err))
 	}
 
-	return customer, err
+	return customer, errs
 }
