@@ -7,7 +7,7 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/config"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"github.com/vagner-nascimento/go-poc-archref/src/integration"
-	"github.com/vagner-nascimento/go-poc-archref/src/presentation/http"
+	"github.com/vagner-nascimento/go-poc-archref/src/presentation"
 	"os"
 )
 
@@ -18,6 +18,7 @@ func LoadApplication() error {
 	if !subSuccess && !httpSuccess {
 		return errors.New("cannot load application")
 	}
+
 	return nil
 }
 
@@ -41,14 +42,16 @@ func loadIntegration() bool {
 		logger.Error("cannot subscribe consumers", err)
 		return false
 	}
+
 	return true
 }
 
 func loadPresentation() bool {
 	logger.Info("loading http presentation")
-	if err := presentation.StartHttpServer(); err != nil {
+	if err := presentation.StartHttpPresentation(); err != nil {
 		logger.Error("cannot load http presentation", err)
 		return false
 	}
+
 	return true
 }

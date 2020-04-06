@@ -1,7 +1,8 @@
-package presentation
+package httppresentation
 
 import (
 	"encoding/json"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"net/http"
 	"reflect"
 )
@@ -29,20 +30,32 @@ func newPaginatedResponse(data interface{}, page int64, quantity int, total int6
 	}
 }
 
-func writeBadRequestResponse(w http.ResponseWriter, httpErr httpErrors) {
-	jsonErr, _ := json.Marshal(httpErr)
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write(jsonErr)
-}
-
 func writeOkResponse(w http.ResponseWriter, data interface{}) {
 	jsonData, _ := json.Marshal(data)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonData)
 }
 
 func writeCreatedResponse(w http.ResponseWriter, data interface{}) {
 	jsonData, _ := json.Marshal(data)
+
 	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonData)
+}
+
+func writeBadRequestResponse(w http.ResponseWriter, httpErr httpErrors) {
+	jsonErr, _ := json.Marshal(httpErr)
+
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write(jsonErr)
+}
+
+func writeInternalServerErrorResponse(w http.ResponseWriter, err error) {
+	logger.Error("error http request", err)
+
+	jsonErr, _ := json.Marshal(newInternalServerError())
+
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write(jsonErr)
 }

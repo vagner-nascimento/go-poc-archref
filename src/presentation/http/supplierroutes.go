@@ -1,10 +1,11 @@
-package presentation
+package httppresentation
 
 import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"github.com/vagner-nascimento/go-poc-archref/src/provider"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -83,21 +84,22 @@ func getSuppliersPaginated(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func parseAndValidateSupplier(r *http.Request) (supplier model.Supplier, errs httpErrors) {
-	defer r.Body.Close()
-
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err == nil {
-		//If int(and i guess that other number too) starts with zero returns error
-		if supplier, err = model.NewSupplierFromJsonBytes(bytes); err != nil {
-			errs.Errors = append(errs.Errors, getConversionError(err))
-			supplier = model.Supplier{}
-		} else {
-			errs = validateHttpRequestData(supplier)
-		}
+func parseAndValidateSupplier(r *http.Request) (supplier model.Supplier, httpErr httpErrors) {
+	supplier, err := parseSupplierFromBody(r.Body)
+	if err != nil {
+		httpErr.Errors = append(httpErr.Errors, newConversionError(err))
 	} else {
-		errs.Errors = append(errs.Errors, getConversionError(err))
+		httpErr = newValidationErrors(supplier.Validate())
 	}
 
-	return supplier, errs
+	return supplier, httpErr
+}
+
+func parseSupplierFromBody(body io.ReadCloser) (supplier model.Supplier, err error) {
+	defer body.Close()
+	if bytes, err := ioutil.ReadAll(body); err == nil {
+		supplier, err = model.NewSupplierFromJsonBytes(bytes)
+	}
+
+	return supplier, err
 }
