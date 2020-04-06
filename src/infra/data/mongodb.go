@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// TODO: log and send handled error to repo pkg
 type mongoDb struct {
 	collection *mongo.Collection
 }
@@ -123,18 +124,25 @@ var (
 )
 
 func mongoDbConnect() (err error) {
+	first := false
 	mongoConnection.once.Do(func() {
+		first = true
 		mongoConf := config.Get().Data.NoSql.Mongo
 		ctx, _ := context.WithTimeout(context.Background(), mongoConf.ClientTimeOut*time.Second)
 		cliOpts := options.Client().ApplyURI(mongoConf.ConnStr)
 		if client, err := mongo.Connect(ctx, cliOpts); err == nil {
-			if err = client.Ping(context.TODO(), nil); err == nil {
+			if err = client.Ping(context.TODO(), nil); err == nil { // TODO: MONGO PING realise why is crashing app when mongo is down
 				mongoConnection.database = client.Database(mongoConf.Database)
 				logger.Info(fmt.Sprintf("successfully connected into mongo database %s", mongoConf.Database))
 				setMongoConfigs(mongoConf)
 			}
 		}
 	})
+
+	if !first {
+		err = mongoConnection.database.Client().Ping(context.TODO(), nil)
+	}
+
 	return err
 }
 

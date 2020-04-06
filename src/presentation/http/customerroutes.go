@@ -25,9 +25,7 @@ func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// TODO: realise how to write specifics responses (errors - 404, 500) generically
 // TODO: validate params (path, query)
-// TODO: realise how to send an safe error into response
 // TODO: clean duplicate codes
 func postCustomer(w http.ResponseWriter, r *http.Request) {
 	customer, vErr := parseAndValidateCustomer(r)

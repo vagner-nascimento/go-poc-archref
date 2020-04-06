@@ -9,7 +9,7 @@ func responseHeaders(next http.Handler) http.Handler {
 	})
 }
 
-func getAllMiddlewareList() (middleware []func(http.Handler) http.Handler) {
+func getMiddlewareList() (middleware []func(http.Handler) http.Handler) {
 	middleware = append(middleware, responseHeaders)
 
 	return middleware

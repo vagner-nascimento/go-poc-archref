@@ -1,19 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"github.com/vagner-nascimento/go-poc-archref/src/loader"
 )
 
-func init() {
-	if err := loader.LoadApplication(); err != nil {
-		panic(err)
+// TODO: realise if really is reading app errors
+func listenToErrors(errsCh <-chan error) {
+	fmt.Println("starting to listen app errors")
+	for {
+		err := <-errsCh
+		fmt.Println("app error", err)
 	}
 }
 
-func keepRunning() {
-	<-make(chan bool)
-}
-
 func main() {
-	keepRunning()
+	listenToErrors(loader.LoadApplication())
 }

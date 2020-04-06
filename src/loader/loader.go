@@ -2,7 +2,6 @@ package loader
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/vagner-nascimento/go-poc-archref/config"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
@@ -11,15 +10,13 @@ import (
 	"os"
 )
 
-func LoadApplication() error {
+func LoadApplication() <-chan error {
 	loadConfiguration()
-	httpSuccess := loadPresentation()
-	subSuccess := loadIntegration()
-	if !subSuccess && !httpSuccess {
-		return errors.New("cannot load application")
-	}
 
-	return nil
+	return multiplexErrorChannels(
+		loadPresentation(),
+		loadIntegration(),
+	)
 }
 
 func loadConfiguration() {
@@ -36,22 +33,28 @@ func loadConfiguration() {
 	logger.Info(fmt.Sprintf("configurations loaded %s", string(conf)))
 }
 
-func loadIntegration() bool {
-	logger.Info("loading subscribers")
-	if err := integration.SubscribeConsumers(); err != nil {
-		logger.Error("cannot subscribe consumers", err)
-		return false
-	}
-
-	return true
+func loadPresentation() <-chan error {
+	logger.Info("loading http presentation")
+	return presentation.StartHttpPresentation()
 }
 
-func loadPresentation() bool {
-	logger.Info("loading http presentation")
-	if err := presentation.StartHttpPresentation(); err != nil {
-		logger.Error("cannot load http presentation", err)
-		return false
+func loadIntegration() <-chan error {
+	logger.Info("loading subscribers")
+	return integration.SubscribeConsumers()
+}
+
+// TODO: realise best place to put concurrency resources
+func multiplexErrorChannels(errChannels ...<-chan error) <-chan error {
+	outChan := make(chan error)
+	for _, errCh := range errChannels {
+		go forwardErrChannels(errCh, outChan)
 	}
 
-	return true
+	return outChan
+}
+
+func forwardErrChannels(from <-chan error, to chan error) {
+	for {
+		to <- <-from
+	}
 }

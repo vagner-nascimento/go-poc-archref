@@ -27,7 +27,7 @@ func newConversionError(err error) httpError {
 }
 
 func newInternalServerError() httpErrors {
-	msg := "An unexpected error occurs during request processing"
+	msg := "An unexpected error occurred during request processing"
 	tp := "unexpected error"
 
 	return httpErrors{Errors: []httpError{{

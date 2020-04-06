@@ -65,6 +65,7 @@ func connectToRabbit() (err error) {
 	return err
 }
 
+// TODO: rabbit reconnect doesn't works
 func reconnectToRabbit(connStr string) {
 	for {
 		if closeErr := <-rabbitCloseError; closeErr != nil {

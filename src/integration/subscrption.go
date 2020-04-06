@@ -14,8 +14,10 @@ type subscription interface {
 	getHandler() func([]byte)
 }
 
-func SubscribeConsumers() (err error) {
-	if amqSub, err := provider.AmqpSubscription(); err == nil {
+func SubscribeConsumers() <-chan error {
+	errsCh := make(chan error)
+	amqSub, err := provider.AmqpSubscription()
+	if err == nil {
 		subs := getSubscriptions()
 		var subsSuccess []string
 		for _, sub := range subs {
@@ -26,11 +28,14 @@ func SubscribeConsumers() (err error) {
 				subsSuccess = append(subsSuccess, reflect.TypeOf(sub).Elem().Name())
 			}
 		}
+
 		if err = amqSub.SubscribeAll(); err == nil {
 			logger.Info(fmt.Sprintf("successfully subscribed: %s", strings.Join(subsSuccess, ", ")))
 		}
 	}
-	return err
+
+	errsCh <- err
+	return errsCh
 }
 
 func getSubscriptions() (subs []subscription) {

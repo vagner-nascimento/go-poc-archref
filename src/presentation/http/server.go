@@ -28,9 +28,9 @@ import (
 		- Http 2 support (ssl)
 */
 //TODO: realise how to validate URL and Query params
-func StartServer() (errOut error) {
+func StartServer(errCh chan error) {
 	router := chi.NewRouter()
-	router.Use(getAllMiddlewareList()...)
+	router.Use(getMiddlewareList()...)
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/customers", newCustomersRoutes())
 		r.Mount("/suppliers", newSupplierRoutes())
@@ -41,17 +41,14 @@ func StartServer() (errOut error) {
 		return nil
 	}
 
-	errOut = errors.New("an unexpected error occurred on try to start http server")
 	if err := chi.Walk(router, walkThroughRoutes); err != nil {
 		logger.Error("error on verify http routes", err)
+		errCh <- errors.New("an error occurred on try to start http server")
+		close(errCh)
 	} else {
 		port := config.Get().Presentation.Web.Port
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", port), router); err != nil {
-			logger.Error(fmt.Sprintf("error on start http server at port %d", port), err)
-		} else {
-			logger.Info(fmt.Sprintf("http server listening at port: %d", port))
-		}
-	}
+		logger.Info(fmt.Sprintf("http server connecting at port: %d", port))
 
-	return errOut
+		errCh <- http.ListenAndServe(fmt.Sprintf(":%d", port), router)
+	}
 }
