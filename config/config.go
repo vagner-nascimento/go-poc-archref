@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+type ConnectionRetry struct {
+	Sleep    time.Duration `json:"sleep"`
+	MaxTries *int          `json:"maxTries"`
+}
+
 type MongoDataConfig struct {
 	ConnStr            string        `json:"connStr"`
 	ClientTimeOut      time.Duration `json:"clientTimeOut"`
@@ -30,7 +35,8 @@ type NoSqlDataConfig struct {
 }
 
 type AmqpDataConfig struct {
-	ConnStr string `json:"connStr"`
+	ConnStr   string          `json:"connStr"`
+	ConnRetry ConnectionRetry `json:"connectionRetry"`
 }
 
 type DataConfig struct {

@@ -8,18 +8,19 @@
       "eMail": "gerald@witcher-mail.com",
       "userId": "5a586eb7-1863-494a-8f02-0231f038007c",
       "address": {
-        "number": "67",
         "street": "Golden Beans street",
+        "number": "67",
         "neighborhood": "Jungles Valley",
         "postalCode": "09890-000",
         "city": "Dreams Land",
         "country": "AS",
-        "state": "RS"
+        "state": "RS",
+        "complement": "None"
       }
     },
     {
       "name": "Yennefer",
-      "birthYear": 1801,
+      "birthYear": 1901,
       "birthDay": 23,
       "birthMonth": 10,
       "eMail": "yennefer@sorcerer-rmail.com",
@@ -31,7 +32,8 @@
         "postalCode": "09890-000",
         "city": "Dreams Land",
         "country": "AS",
-        "state": "RS"
+        "state": "RS",
+        "complement": "None"
       }
     }
   ],

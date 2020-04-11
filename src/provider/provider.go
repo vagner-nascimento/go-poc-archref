@@ -43,5 +43,6 @@ func AmqpSubscription() (repository.AmqpSubscriptionHandler, error) {
 	once.amqSub.Do(func() {
 		resources.amqSub, err = repository.NewAmqpSubscription()
 	})
+
 	return resources.amqSub, err
 }

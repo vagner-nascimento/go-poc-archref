@@ -14,28 +14,29 @@ type subscription interface {
 	getHandler() func([]byte)
 }
 
-func SubscribeConsumers() <-chan error {
-	errsCh := make(chan error)
+func SubscribeConsumers() (err error) {
 	amqSub, err := provider.AmqpSubscription()
 	if err == nil {
 		subs := getSubscriptions()
-		var subsSuccess []string
+
+		var subSuccess []string
 		for _, sub := range subs {
 			err := amqSub.AddSubscriber(sub.getTopic(), sub.getConsumer(), sub.getHandler())
 			if err != nil {
+				// TODO: INTEGRATION AMQ SUB: if someone fails error, it will be never reconnected
+				// it will happen only if topic name. consumer or handler were empty or null
 				logger.Error("error on subscribe consumer", err)
 			} else {
-				subsSuccess = append(subsSuccess, reflect.TypeOf(sub).Elem().Name())
+				subSuccess = append(subSuccess, reflect.TypeOf(sub).Elem().Name())
 			}
 		}
 
 		if err = amqSub.SubscribeAll(); err == nil {
-			logger.Info(fmt.Sprintf("successfully subscribed: %s", strings.Join(subsSuccess, ", ")))
+			logger.Info(fmt.Sprintf("successfully subscribed: %s", strings.Join(subSuccess, ", ")))
 		}
 	}
 
-	errsCh <- err
-	return errsCh
+	return err
 }
 
 func getSubscriptions() (subs []subscription) {

@@ -15,5 +15,7 @@ func listenToErrors(errsCh <-chan error) {
 }
 
 func main() {
-	listenToErrors(loader.LoadApplication())
+	errs := make(chan error)
+	go loader.LoadApplication(errs)
+	listenToErrors(errs)
 }

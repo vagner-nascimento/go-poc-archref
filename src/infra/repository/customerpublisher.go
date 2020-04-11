@@ -22,5 +22,6 @@ func newCustomerPublisher() (customerPub amqpPublishHandler, err error) {
 	if handler, err := data.NewAmqpHandler(); err == nil {
 		customerPub = &customerPublisher{handler: handler, topic: config.Get().Integration.Amqp.Pubs.Customer.Topic}
 	}
+
 	return customerPub, err
 }

@@ -15,7 +15,11 @@
       }
     },
     "amqp": {
-      "connStr": "amqp://guest:guest@go-rabbit-mq:5672"
+      "connStr": "amqp://guest:guest@localhost:5672",
+      "connectionRetry": {
+        "sleep": 3,
+        "maxTries": null
+      }
     }
   },
   "presentation": {

@@ -10,13 +10,14 @@ import (
 	"os"
 )
 
-func LoadApplication() <-chan error {
+func LoadApplication(errs chan error) {
 	loadConfiguration()
 
-	return multiplexErrorChannels(
-		loadPresentation(),
-		loadIntegration(),
-	)
+	if err := loadIntegration(); err != nil {
+		errs <- err
+	}
+
+	loadPresentation(errs)
 }
 
 func loadConfiguration() {
@@ -33,28 +34,11 @@ func loadConfiguration() {
 	logger.Info(fmt.Sprintf("configurations loaded %s", string(conf)))
 }
 
-func loadPresentation() <-chan error {
-	logger.Info("loading http presentation")
-	return presentation.StartHttpPresentation()
+func loadPresentation(errs chan error) {
+	go presentation.StartHttpPresentation(errs)
 }
 
-func loadIntegration() <-chan error {
+func loadIntegration() error {
 	logger.Info("loading subscribers")
 	return integration.SubscribeConsumers()
-}
-
-// TODO: realise best place to put concurrency resources
-func multiplexErrorChannels(errChannels ...<-chan error) <-chan error {
-	outChan := make(chan error)
-	for _, errCh := range errChannels {
-		go forwardErrChannels(errCh, outChan)
-	}
-
-	return outChan
-}
-
-func forwardErrChannels(from <-chan error, to chan error) {
-	for {
-		to <- <-from
-	}
 }

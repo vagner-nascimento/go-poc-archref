@@ -8,6 +8,7 @@ import (
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 	"strings"
 	"sync"
+	"time"
 )
 
 type (
@@ -46,45 +47,76 @@ type (
 	}
 )
 
-var (
-	rabbitCloseError chan *amqp.Error
-	rabbitConn       *amqp.Connection
-	onceRabbitConn   sync.Once
-)
-
-func connectToRabbit() (err error) {
-	onceRabbitConn.Do(func() {
-		connStr := config.Get().Data.Amqp.ConnStr
-		if rabbitConn, err = getRabbitConn(connStr); err == nil {
-			logger.Info("successfully connected into RabbitMQ server")
-			rabbitCloseError = make(chan *amqp.Error)
-			rabbitConn.NotifyClose(rabbitCloseError)
-			go reconnectToRabbit(connStr)
-		}
-	})
-	return err
+type rabbitConnection struct {
+	conn *amqp.Connection
 }
 
-// TODO: rabbit reconnect doesn't works
-func reconnectToRabbit(connStr string) {
+func (rc *rabbitConnection) getChannel() (*amqp.Channel, error) {
+	if rc.conn == nil || rc.conn.IsClosed() {
+		return nil, errors.New("rabbit connection is closed")
+	}
+
+	return rc.conn.Channel()
+}
+
+var (
+	rabbitConn     rabbitConnection
+	onceRabbitConn sync.Once
+)
+
+func setRabbitConnection() (err error) {
+	onceRabbitConn.Do(func() {
+		errs := make(chan *amqp.Error)
+		go connectIntoRabbit(errs)
+		go reconnectRabbitOnErrors(errs)
+	})
+
+	return err // TODO REMOVE THIS ERR
+}
+
+// TODO: Realise how to subscribe consumers if amqp gets down
+func reconnectRabbitOnErrors(errs chan *amqp.Error) {
+	var closeErr *amqp.Error
 	for {
-		if closeErr := <-rabbitCloseError; closeErr != nil {
-			logger.Info("reconnecting into rabbit mq server")
-			var err error
-			if rabbitConn, err = getRabbitConn(connStr); err == nil {
-				logger.Info("successfully reconnected into RabbitMQ server")
-				rabbitConn.NotifyClose(rabbitCloseError)
-			}
+		if closeErr = <-errs; closeErr != nil {
+			logger.Error("an error occurred on rabbit mq connection", closeErr)
+			logger.Info("trying to reconnecting into rabbit mq server...")
+			connectIntoRabbit(errs)
 		}
+	}
+
+	logger.Error("error on connect into rabbit mq sever", errors.New(closeErr.Error()))
+	close(errs)
+}
+
+func connectIntoRabbit(errs chan *amqp.Error) {
+	maxTries := config.Get().Data.Amqp.ConnRetry.MaxTries
+	sleep := config.Get().Data.Amqp.ConnRetry.Sleep
+
+	var err error
+	for currentTry := -1; maxTries == nil || currentTry < *maxTries; currentTry++ {
+		if rabbitConn.conn, err = amqp.Dial(config.Get().Data.Amqp.ConnStr); err != nil {
+			if maxTries != nil {
+				logger.Info(fmt.Sprintf("waiting %d seconds until try to reconnect %d of %d tries", sleep, currentTry+1, maxTries))
+			} else {
+				logger.Info(fmt.Sprintf("waiting %d seconds until try to reconnect %d try of infinite", sleep, currentTry+1))
+			}
+
+			time.Sleep(sleep * time.Second)
+		} else {
+			rabbitConn.conn.NotifyClose(errs)
+			break
+		}
+	}
+
+	if err != nil {
+		logger.Info("cannot connect into amq server")
+		close(errs)
 	}
 }
 
-func getRabbitConn(connStr string) (*amqp.Connection, error) {
-	return amqp.Dial(connStr)
-}
-
 func subscribeRabbitConsumers(subscribers []rabbitSubscriber) error {
-	ch, err := rabbitConn.Channel()
+	ch, err := rabbitConn.getChannel()
 	if err != nil {
 		return err
 	}
@@ -92,12 +124,14 @@ func subscribeRabbitConsumers(subscribers []rabbitSubscriber) error {
 	var qNames []string
 	for i := 0; i < len(subscribers); i = i + 1 {
 		c := subscribers[i]
-		processMsgs, err := processMessages(ch, c)
+
+		processMsg, err := processMessages(ch, c)
 		if err != nil {
 			logger.Error(fmt.Sprintf("error on try subbscribe consumer %s", c.message.Consumer), err)
 			continue
 		}
-		go processMsgs()
+
+		go processMsg()
 		qNames = append(qNames, c.queue.Name)
 	}
 
@@ -109,6 +143,7 @@ func subscribeRabbitConsumers(subscribers []rabbitSubscriber) error {
 	return nil
 }
 
+// TODO if AMQP connection is lost, it keep connected when it reconnect?
 func processMessages(ch *amqp.Channel, sub rabbitSubscriber) (func(), error) {
 	q, err := ch.QueueDeclare(
 		sub.queue.Name,
@@ -147,6 +182,7 @@ func (rh *rabbitAmqpHandler) AddSubscriber(topicName string, consumerName string
 	if err := validateSub(topicName, consumerName, handler); err != nil {
 		return err
 	}
+
 	rh.subscribers = append(rh.subscribers, newRabbitSubscriber(topicName, consumerName, handler))
 	return nil
 }
@@ -157,11 +193,12 @@ func (rh *rabbitAmqpHandler) SubscribeAll() (err error) {
 	} else {
 		err = errors.New("there are no subscribers to consume topics")
 	}
+
 	return err
 }
 
 func (rh *rabbitAmqpHandler) Publish(data []byte, topicName string) (err error) {
-	ch, err := rabbitConn.Channel()
+	ch, err := rabbitConn.getChannel()
 	if err != nil {
 		return err
 	}
@@ -190,7 +227,7 @@ func (rh *rabbitAmqpHandler) Publish(data []byte, topicName string) (err error) 
 }
 
 func NewAmqpHandler() (AmqpHandler, error) {
-	if err := connectToRabbit(); err != nil {
+	if err := setRabbitConnection(); err != nil {
 		return nil, err
 	}
 
