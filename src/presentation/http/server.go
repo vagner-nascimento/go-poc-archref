@@ -47,7 +47,7 @@ func StartServer(errCh chan error) {
 		close(errCh)
 	} else {
 		port := config.Get().Presentation.Web.Port
-		logger.Info(fmt.Sprintf("http server connecting at port: %d", port))
+		logger.Info(fmt.Sprintf("http server connected at port: %d", port))
 
 		errCh <- http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	}

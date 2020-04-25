@@ -40,5 +40,6 @@ func loadPresentation(errs chan error) {
 
 func loadIntegration() error {
 	logger.Info("loading subscribers")
+	// TODO: Realise where is better location to do it async without block if retry was necessary
 	return integration.SubscribeConsumers()
 }

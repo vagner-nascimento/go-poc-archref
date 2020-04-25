@@ -3,6 +3,7 @@ package integration
 import (
 	"github.com/vagner-nascimento/go-poc-archref/config"
 	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/repository"
 	"github.com/vagner-nascimento/go-poc-archref/src/model"
 	"github.com/vagner-nascimento/go-poc-archref/src/provider"
 )
@@ -13,19 +14,19 @@ type enterpriseSub struct {
 	handler  func(data []byte)
 }
 
-func (es *enterpriseSub) getTopic() string {
+func (es *enterpriseSub) GetTopic() string {
 	return es.topic
 }
 
-func (es *enterpriseSub) getConsumer() string {
+func (es *enterpriseSub) GetConsumer() string {
 	return es.consumer
 }
 
-func (es *enterpriseSub) getHandler() func([]byte) {
+func (es *enterpriseSub) GetHandler() func([]byte) {
 	return es.handler
 }
 
-func newEnterpriseSub() subscription {
+func newEnterpriseSub() repository.Subscription {
 	entConf := config.Get().Integration.Amqp.Subs.Enterprise
 	return &enterpriseSub{
 		topic:    entConf.Topic,

@@ -11,15 +11,13 @@ import (
 )
 
 type supplierRepository struct {
-	db  data.NoSqlHandler
-	pub amqpPublishHandler
+	db data.NoSqlHandler
 }
 
 func (repo *supplierRepository) Save(sup *model.Supplier) (err error) {
 	sup.Id = uuid.New().String()
-	if _, err = repo.db.InsertOne(sup); err == nil {
-		go repo.pub.publish(sup)
-	}
+	_, err = repo.db.InsertOne(sup)
+
 	return err
 }
 
@@ -27,9 +25,7 @@ func (repo *supplierRepository) Update(sup model.Supplier) (err error) {
 	if replaceCount, err := repo.db.ReplaceOne(bson.M{"id": sup.Id}, sup); err == nil && replaceCount < 1 {
 		err = errors.New("none supplier was replaced")
 	}
-	if err == nil {
-		go repo.pub.publish(sup)
-	}
+
 	return err
 }
 
@@ -67,16 +63,12 @@ func (repo *supplierRepository) GetMany(params []model.SearchParameter, page int
 
 func NewSupplierRepository() (supDataHandler app.SupplierDataHandler, err error) {
 	var (
-		db  data.NoSqlHandler
-		pub amqpPublishHandler
+		db data.NoSqlHandler
 	)
 
 	if db, err = data.NewNoSqlDb(config.Get().Data.NoSql.Collections.Supplier); err == nil {
-		if pub, err = newSupplierPublisher(); err == nil {
-			supDataHandler = &supplierRepository{
-				db:  db,
-				pub: pub,
-			}
+		supDataHandler = &supplierRepository{
+			db: db,
 		}
 	}
 	return supDataHandler, err
