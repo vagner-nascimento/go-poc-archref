@@ -11,7 +11,7 @@ type rabbitSubInfo struct {
 	handler func([]byte)
 }
 
-func SubscribeConsumer(queueName string, consumerName string, handler func([]byte)) error {
+func SubscribeRabbitConsumer(queueName string, consumerName string, handler func([]byte)) error {
 	rbChan, err := getRabbitChannel()
 	if err != nil {
 		return err

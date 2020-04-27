@@ -20,21 +20,15 @@ func SubscribeConsumers(subs []Subscription) error {
 		return err
 	}
 
-	go func(subs []Subscription) {
-		connStatus := make(chan bool)
-		if err := data.ListenToRabbitConnectionStatus(&connStatus); err != nil {
-			fmt.Println("error on listen to amqp connection status")
-			return
-		}
-
-		for isConnected := range connStatus {
+	connStatus := make(chan bool)
+	data.ListenToRabbitConnected(&connStatus)
+	go func(subs []Subscription, connStatus *chan bool) {
+		for isConnected := range *connStatus {
 			if !isConnected {
-				subscribeAllWhenReestablishConnection(&connStatus, subs)
+				subscribeAllWhenReestablishConnection(connStatus, subs)
 			}
 		}
-
-		return
-	}(subs)
+	}(subs, &connStatus)
 
 	return nil
 }
@@ -42,9 +36,10 @@ func SubscribeConsumers(subs []Subscription) error {
 func subscribeConsumers(subs []Subscription) error {
 	subsFailed := 0
 	for _, sub := range subs {
-		if err := data.SubscribeConsumer(sub.GetTopic(), sub.GetConsumer(), sub.GetHandler()); err != nil {
-			logger.Error(fmt.Sprintf("error on subscribe consumer %s", sub.GetConsumer()), err)
-			subsFailed = subsFailed + 1
+		if err := data.SubscribeRabbitConsumer(sub.GetTopic(), sub.GetConsumer(), sub.GetHandler()); err != nil {
+			logger.Error(fmt.Sprintf("error on subscribe consumer %s on topic %s", sub.GetConsumer(), sub.GetTopic()), err)
+
+			subsFailed++
 		} else {
 			logger.Info(fmt.Sprintf("consumer %s subscried on topic %s", sub.GetConsumer(), sub.GetTopic()))
 		}
@@ -57,13 +52,13 @@ func subscribeConsumers(subs []Subscription) error {
 	return nil
 }
 
-// TODO: Realise why dont subscribe again on reconnect
 func subscribeAllWhenReestablishConnection(connStatus *chan bool, subs []Subscription) {
 	for isConnected := range *connStatus {
 		if isConnected {
 			if err := subscribeConsumers(subs); err != nil {
 				logger.Error("error try to re-subscribe consumers", err)
 			}
+			break
 		}
 	}
 }

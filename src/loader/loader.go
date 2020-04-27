@@ -10,14 +10,14 @@ import (
 	"os"
 )
 
-func LoadApplication(errs chan error) {
+func LoadApplication() *chan error {
 	loadConfiguration()
 
-	if err := loadIntegration(); err != nil {
-		errs <- err
-	}
+	errs := make(chan error)
+	loadIntegration(&errs)
+	loadPresentation(&errs)
 
-	loadPresentation(errs)
+	return &errs
 }
 
 func loadConfiguration() {
@@ -30,16 +30,24 @@ func loadConfiguration() {
 		logger.Error("cannot load configurations", err)
 		panic(err)
 	}
+
 	conf, _ := json.Marshal(config.Get())
 	logger.Info(fmt.Sprintf("configurations loaded %s", string(conf)))
 }
 
-func loadPresentation(errs chan error) {
+func loadPresentation(errs *chan error) {
+	logger.Info("loading http presentation asynchronously")
 	go presentation.StartHttpPresentation(errs)
 }
 
-func loadIntegration() error {
-	logger.Info("loading subscribers")
-	// TODO: Realise where is better location to do it async without block if retry was necessary
-	return integration.SubscribeConsumers()
+func loadIntegration(errsCh *chan error) {
+	logger.Info("loading subscribers asynchronously")
+	go func(errs *chan error) {
+		if err := integration.SubscribeConsumers(); err != nil {
+			logger.Error("error subscribe consumers", err)
+			*errs <- err
+		} else {
+			logger.Info("consumers successfully subscribed")
+		}
+	}(errsCh)
 }

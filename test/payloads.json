@@ -65,9 +65,9 @@
   ],
   "enterprises": [
     {
-      "companyName": "Wash Clean",
+      "companyName": "Wash Clean Ent",
       "document": "A468507GB",
-      "active": true
+      "active": false
     }
   ]
 }
