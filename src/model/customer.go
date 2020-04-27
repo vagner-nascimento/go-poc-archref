@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"github.com/go-playground/validator/v10"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 )
 
 // TODO: realise how to include dates into models
@@ -27,6 +28,16 @@ func (c *Customer) Validate() (valErrs validator.ValidationErrors) {
 	}
 
 	return valErrs
+}
+
+func (c *Customer) GetBytes() []byte {
+	if data, err := json.Marshal(*c); err == nil {
+		return data
+	} else {
+		logger.Error("error on covert Customer to bytes", err)
+	}
+
+	return nil
 }
 
 func NewCustomerFromJsonBytes(bytes []byte) (customer Customer, err error) {

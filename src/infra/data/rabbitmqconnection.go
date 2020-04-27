@@ -67,7 +67,7 @@ func connectIntoRabbit() (err error) {
 
 			errs := make(chan *amqp.Error)
 			singletonRabbitConn.conn.NotifyClose(errs)
-			go reconnectRabbitOnClose(errs)
+			go reconnectIntoRabbitOnClose(errs)
 			break
 		}
 	}
@@ -82,7 +82,7 @@ func connectIntoRabbit() (err error) {
 	return err
 }
 
-func reconnectRabbitOnClose(errs chan *amqp.Error) {
+func reconnectIntoRabbitOnClose(errs chan *amqp.Error) {
 	for closeErr := range errs {
 		if closeErr != nil {
 			fmt.Println("rabbit mq connection was closed, error:", closeErr)

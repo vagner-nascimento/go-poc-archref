@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"github.com/go-playground/validator/v10"
+	"github.com/vagner-nascimento/go-poc-archref/src/infra/logger"
 )
 
 //TODO: Realise how to make invalid when bool is not informed (pointer is an way)
@@ -21,6 +22,16 @@ func (s *Supplier) Validate() (valErrs validator.ValidationErrors) {
 	}
 
 	return valErrs
+}
+
+func (s *Supplier) GetBytes() []byte {
+	if data, err := json.Marshal(*s); err == nil {
+		return data
+	} else {
+		logger.Error("error on covert Customer to bytes", err)
+	}
+
+	return nil
 }
 
 func NewSupplierFromJsonBytes(data []byte) (sup Supplier, err error) {
