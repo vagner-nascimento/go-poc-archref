@@ -9,9 +9,3 @@ type NoSqlHandler interface {
 	Find(filters bson.D, maxDocs int64, page int64, results chan interface{}, total *int64)
 	ReplaceOne(filter bson.M, newData interface{}) (int64, error)
 }
-
-type AmqpHandler interface {
-	AddSubscriber(topicName string, consumerName string, handler func([]byte)) error
-	SubscribeAll() error
-	Publish(data []byte, topicName string) error
-}

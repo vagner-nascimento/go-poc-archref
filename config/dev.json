@@ -17,8 +17,8 @@
     "amqp": {
       "connStr": "amqp://guest:guest@localhost:5672",
       "connectionRetry": {
-        "sleep": 3,
-        "maxTries": null
+        "sleep": 5,
+        "maxTries": 5
       }
     }
   },

@@ -2,7 +2,7 @@
   "customers": [
     {
       "name": "Gerald",
-      "birthYear": 1768,
+      "birthYear": 1968,
       "birthDay": 6,
       "birthMonth": 1,
       "eMail": "gerald@witcher-mail.com",
@@ -65,9 +65,9 @@
   ],
   "enterprises": [
     {
-      "companyName": "Wash Clean",
+      "companyName": "Wash Clean Ent",
       "document": "A468507GB",
-      "active": true
+      "active": false
     }
   ]
 }

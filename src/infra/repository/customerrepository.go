@@ -12,15 +12,13 @@ import (
 )
 
 type customerRepository struct {
-	db  data.NoSqlHandler
-	pub amqpPublishHandler
+	db data.NoSqlHandler
 }
 
 func (o *customerRepository) Save(customer *model.Customer) (err error) {
 	customer.Id = uuid.New().String()
-	if _, err = o.db.InsertOne(customer); err == nil {
-		go o.pub.publish(customer)
-	}
+	_, err = o.db.InsertOne(customer)
+
 	return err
 }
 
@@ -64,23 +62,19 @@ func (o *customerRepository) Update(customer model.Customer) error {
 		return errors.New("none customer was replaced")
 	}
 
-	go o.pub.publish(customer)
 	return nil
 }
 
 func NewCustomerRepository() (custDataHandler app.CustomerDataHandler, err error) {
 	var (
-		db  data.NoSqlHandler
-		pub amqpPublishHandler
+		db data.NoSqlHandler
 	)
 
 	if db, err = data.NewNoSqlDb(config.Get().Data.NoSql.Collections.Customer); err == nil {
-		if pub, err = newCustomerPublisher(); err == nil {
-			custDataHandler = &customerRepository{
-				db:  db,
-				pub: pub,
-			}
+		custDataHandler = &customerRepository{
+			db: db,
 		}
 	}
+
 	return custDataHandler, err
 }

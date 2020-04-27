@@ -9,7 +9,6 @@ import (
 var resources struct {
 	customerUseCase app.CustomerUseCase
 	supplierUseCase app.SupplierUseCase
-	amqSub          repository.AmqpSubscriptionHandler
 }
 
 var once struct {
@@ -36,13 +35,4 @@ func SupplierUseCase() (app.SupplierUseCase, error) {
 		}
 	})
 	return resources.supplierUseCase, err
-}
-
-func AmqpSubscription() (repository.AmqpSubscriptionHandler, error) {
-	var err error
-	once.amqSub.Do(func() {
-		resources.amqSub, err = repository.NewAmqpSubscription()
-	})
-
-	return resources.amqSub, err
 }
